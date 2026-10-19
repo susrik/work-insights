@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from sqlalchemy import delete, func, select
 
+from insights.core.insights_scan import run_scan
 from insights.core.intake import run_intake
 from insights.db.models import JobLogEntry, JobRun, utcnow
 from insights.jobs.registry import JobContext, last_successful_run, registry
@@ -49,5 +50,18 @@ def intake(ctx: JobContext) -> str:
         last = last_successful_run(ctx.session, "intake")
         since = last.started_at if last else None
     summary = run_intake(ctx.session, ctx.llm, notes, since, job_run_id=ctx.job_run.id, log=log)
+    ctx.add_tokens(summary.tokens)
+    return summary.as_text()
+
+
+@registry.register("insights_scan")
+def insights_scan(ctx: JobContext) -> str:
+    """Ask the smart model for structure proposals over the open threads."""
+    log = ctx.log()
+    if not ctx.config.llm.api_key:
+        log.error("llm.api_key is not set; the scan needs the LLM")
+        return "llm not configured"
+    summary = run_scan(ctx.session, ctx.llm, job_run_id=ctx.job_run.id, log=log)
+    ctx.session.commit()
     ctx.add_tokens(summary.tokens)
     return summary.as_text()

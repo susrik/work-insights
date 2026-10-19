@@ -381,6 +381,42 @@ def changes_undo(change_id: int, config: Config) -> None:
         _echo(_call(client, "POST", f"/api/changes/{change_id}/undo"))
 
 
+# --- insights ---
+
+
+@cli.group()
+def insight() -> None:
+    """AI structure proposals."""
+
+
+@insight.command("list")
+@click.option("--thread", "thread_id", type=int, default=None)
+@click.option("--status", default="new", help="new | applied | dismissed | all")
+@config_option
+def insight_list(thread_id: int | None, status: str, config: Config) -> None:
+    params: dict[str, Any] = {"status": status}
+    if thread_id is not None:
+        params["thread_id"] = thread_id
+    with _client(config) as client:
+        _echo(_call(client, "GET", "/api/insights", params=params))
+
+
+@insight.command("apply")
+@click.argument("insight_id", type=int)
+@config_option
+def insight_apply(insight_id: int, config: Config) -> None:
+    with _client(config) as client:
+        _echo(_call(client, "POST", f"/api/insights/{insight_id}/apply"))
+
+
+@insight.command("dismiss")
+@click.argument("insight_id", type=int)
+@config_option
+def insight_dismiss(insight_id: int, config: Config) -> None:
+    with _client(config) as client:
+        _echo(_call(client, "POST", f"/api/insights/{insight_id}/dismiss"))
+
+
 # --- jobs ---
 
 

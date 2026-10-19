@@ -12,6 +12,10 @@ objects or plain data, and `flush()` but never `commit()`; the caller
   `apply_result` creates provisional mentions/threads. Jira-key and label
   hints are applied deterministically around the model. Prompt text is
   `SYSTEM_PROMPT`; the reply schema is `IntakeResult`.
+- `insights_scan.py`: one smart-tier pass over the open threads proposing
+  split / merge / reparent / done / stale as `Insight` rows. `apply` runs
+  the matching `threads` ops with `actor=Actor.AI` and the scan's run id;
+  `dismiss` keeps the row so its fingerprint is not re-proposed.
 - `changes.py`: `record` every mutation; `undo` one, `revert_run` all for
   a job. Coerces JSON-stored values back to enums/dates.
 - `focus.py`: Today ranking (`rank_threads`, deterministic + daily jitter)

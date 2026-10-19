@@ -47,6 +47,22 @@
       </div>
     </div>
 
+    {% if open_insights %}
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body p-4">
+        <h2 class="card-title text-base">Proposals</h2>
+        <ul class="text-sm">
+          {% for ins in open_insights[:8] %}
+          <li class="py-0.5 flex gap-2 items-center">
+            <span class="badge badge-xs badge-accent">{{ ins.kind }}</span>
+            <a class="link link-hover truncate" href="/threads?selected={{ ins.thread_id }}">{{ ins.title }}</a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% if open_insights | length > 8 %}<p class="text-xs opacity-60">and {{ open_insights | length - 8 }} more</p>{% endif %}
+      </div>
+    </div>
+    {% endif %}
     <div class="card bg-base-100 shadow-sm">
       <div class="card-body p-4">
         <h2 class="card-title text-base">Review</h2>

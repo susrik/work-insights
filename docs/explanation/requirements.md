@@ -20,7 +20,7 @@ to [roadmap.md](roadmap.md). Column three gives the place to look.
 | 7 | Richer than ewo tasks: things that actually need doing, with hierarchy | Covered | Threads with single-parent tree and kinds `work`, `agreement`, `goal` |
 | 8 | Labels plus something like "topics"; propose alternatives | Covered | Labels only, with path/Jira hints so they apply themselves; see [concepts.md](../reference/concepts.md) |
 | 9 | Know my priorities easily, with fine control | Covered | Priority field, Today ranking; every field editable |
-| 10 | Refactoring and triage must be simple; split a too-generic bucket easily | Covered | Threads page: reparent, merge, link, detach mentions, undo; `insights_scan` proposes splits (phase 5) |
+| 10 | Refactoring and triage must be simple; split a too-generic bucket easily | Covered | Threads page: reparent, merge, link, detach mentions, undo; `insights_scan` proposes splits with per-child mention assignment |
 | 11 | AI help is optional and always validated; no big suggestions page but full editing still possible | Covered | Insights shown contextually on the thread with Apply/Dismiss; full edit forms remain |
 | 12 | Every change reversible; triage can be redone | Covered | `changes` table; undo per change, revert per job run |
 | 13 | New name for "nugget"; keep a link back to the note file (file only, no line numbers) | Covered | **Mention** with `path`; `notes.repo_url_template` renders the GitHub link |
@@ -32,7 +32,7 @@ to [roadmap.md](roadmap.md). Column three gives the place to look.
 | 19 | Same summary per project for project meetings | Covered | Label page, same layout as the Person page |
 | 20 | New words for task and for the project; it is a planner, not a task manager | Covered | Thread, Mention, Label, Insight; project `work-insights` |
 | 21 | Usable immediately; some setup work acceptable, but not days of ramp-up | Covered | Intake + Review page (phase 3, done) |
-| 22 | Lots of AI analysis of structure: split overcomplicated threads, parallel vs parent-child | Covered (partly) | `insights_scan` job with split/merge/reparent kinds (phase 5); more kinds on roadmap |
+| 22 | Lots of AI analysis of structure: split overcomplicated threads, parallel vs parent-child | Covered (partly) | `insights_scan` job: split, merge, reparent, done, stale; parallel-vs-nested analysis on roadmap |
 | 23 | Parent-child is enough for dependency; plus non-dependent links | Covered | `parent_id` and `thread_links` |
 | 24 | Reports and notifications: slippage, roadblocks, critical items | Roadmap | Item 1 |
 | 25 | Goals from review meetings are not Jira tickets but must be tracked | Covered | Thread kind `goal`; review-cycle support is roadmap item 8 |

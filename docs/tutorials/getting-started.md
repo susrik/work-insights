@@ -87,4 +87,6 @@ insights changes undo <id>
 - [Run intake over your notes](../how-to/run-intake.md) once an LLM is
   configured.
 - [Prepare a meeting](../how-to/prepare-a-meeting.md).
+- [Review structure proposals](../how-to/review-proposals.md) once a few
+  threads exist.
 - Read [concepts](../reference/concepts.md) for the vocabulary.

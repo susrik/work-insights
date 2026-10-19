@@ -56,7 +56,11 @@ a whole job run can be reverted.
 ## Insight
 
 An AI proposal about structure: split this thread, merge these two,
-reparent that one. Shown on the thread it concerns with Apply and Dismiss.
+reparent that one, this looks done, this looks abandoned. Produced by the
+`insights_scan` job and shown on the thread it concerns with Apply and
+Dismiss. Applying runs ordinary thread operations attributed to the AI and
+the scan's run, so they can be undone one by one or reverted as a batch.
+Dismissing keeps the proposal so the next scan does not raise it again.
 
 ## Job
 

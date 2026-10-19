@@ -9,6 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from insights.db.models import (
     Actor,
     Change,
+    Insight,
+    InsightStatus,
     JobRun,
     Label,
     Mention,
@@ -246,6 +248,26 @@ class ChangeOut(_Out):
 
 class RevertOut(BaseModel):
     reverted: int
+
+
+# --- insights ---
+
+
+class InsightOut(_Out):
+    id: int
+    kind: str
+    thread_id: int | None
+    title: str
+    reason: str | None
+    payload: dict[str, object]
+    status: InsightStatus
+    job_run_id: int | None
+    created_at: datetime
+    decided_at: datetime | None
+
+    @classmethod
+    def of(cls, i: Insight) -> InsightOut:
+        return cls.model_validate(i)
 
 
 # --- jobs ---

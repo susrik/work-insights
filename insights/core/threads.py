@@ -268,7 +268,13 @@ def ancestors(thread: Thread) -> list[Thread]:
     return chain
 
 
-def merge_threads(session: Session, into_id: int, from_id: int) -> Thread:
+def merge_threads(
+    session: Session,
+    into_id: int,
+    from_id: int,
+    actor: Actor = Actor.USER,
+    job_run_id: int | None = None,
+) -> Thread:
     """Move everything from ``from_id`` onto ``into_id`` and delete it."""
     if into_id == from_id:
         raise ValueError("cannot merge a thread into itself")
@@ -277,10 +283,28 @@ def merge_threads(session: Session, into_id: int, from_id: int) -> Thread:
     if into_id in descendant_ids(session, from_id):
         raise ValueError("cannot merge a thread into one of its descendants")
     for mention in list(loser.mentions):
-        changes.record(session, changes.ENTITY_MENTION, mention.id, "thread_id", from_id, into_id)
+        changes.record(
+            session,
+            changes.ENTITY_MENTION,
+            mention.id,
+            "thread_id",
+            from_id,
+            into_id,
+            actor,
+            job_run_id,
+        )
         mention.thread = into
     for child in list(loser.children):
-        changes.record(session, changes.ENTITY_THREAD, child.id, "parent_id", from_id, into_id)
+        changes.record(
+            session,
+            changes.ENTITY_THREAD,
+            child.id,
+            "parent_id",
+            from_id,
+            into_id,
+            actor,
+            job_run_id,
+        )
         child.parent = into
     for label in loser.labels:
         if label not in into.labels:

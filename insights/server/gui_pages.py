@@ -10,7 +10,16 @@ from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
-from insights.core import changes, focus, labels, mentions, people, summaries, threads
+from insights.core import (
+    changes,
+    focus,
+    insights_scan,
+    labels,
+    mentions,
+    people,
+    summaries,
+    threads,
+)
 from insights.db.models import Thread, ThreadKind, ThreadPriority, ThreadStatus
 from insights.jobs.registry import list_runs
 from insights.server.gui import ConfigDep, SessionDep, render
@@ -45,6 +54,7 @@ def today_page(request: Request, session: SessionDep, config: ConfigDep) -> HTML
         last_runs=list_runs(session, limit=5),
         ranked=focus.rank_threads(session),
         attention=focus.attention(session),
+        open_insights=insights_scan.list_insights(session, limit=20),
     )
 
 
@@ -108,6 +118,7 @@ def _thread_context(session: Session, thread_id: int) -> dict[str, Any]:
             session, mentions.MentionFilter(state="all", thread_id=thread.id)
         ),
         "changes": changes.list_changes(session, changes.ENTITY_THREAD, thread.id, limit=20),
+        "insights": insights_scan.list_insights(session, thread.id),
         "candidates": [
             t
             for t in threads.list_threads(session, threads.ThreadFilter(status="open"))
@@ -256,6 +267,23 @@ def thread_detach_mention(
     thread_id: int, mention_id: int, request: Request, session: SessionDep
 ) -> HTMLResponse:
     _guard(lambda: mentions.place_mention(session, mention_id, None))
+    return _thread_fragment(request, session, thread_id)
+
+
+@router.post("/gui/insights/{insight_id}/apply", response_class=HTMLResponse)
+def insight_apply(
+    insight_id: int, request: Request, session: SessionDep, thread_id: int
+) -> HTMLResponse:
+    insight = _guard(lambda: insights_scan.apply(session, insight_id))
+    # a merge keeps thread_id; nothing else deletes the thread
+    return _thread_fragment(request, session, insight.thread_id or thread_id)
+
+
+@router.post("/gui/insights/{insight_id}/dismiss", response_class=HTMLResponse)
+def insight_dismiss(
+    insight_id: int, request: Request, session: SessionDep, thread_id: int
+) -> HTMLResponse:
+    _guard(lambda: insights_scan.dismiss(session, insight_id))
     return _thread_fragment(request, session, thread_id)
 
 

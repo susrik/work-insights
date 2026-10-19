@@ -22,16 +22,17 @@ Full walk-through: [docs/tutorials/getting-started.md](docs/tutorials/getting-st
 ## Documentation
 
 - [Tutorials](docs/tutorials/) — getting started
-- [How-to](docs/how-to/) — run intake, prepare a meeting, develop
+- [How-to](docs/how-to/) — run intake, prepare a meeting, review proposals, develop
 - [Reference](docs/reference/) — concepts, configuration
 - [Explanation](docs/explanation/) — architecture, requirements, roadmap
 
 ## Status
 
-Phase 4 of 5: intake, Review, Threads (tree, edit, reparent, merge,
-links), Today (focus ranking, overdue / blocked / quiet), and Person and
-Label pages for 1:1 and project-meeting prep. AI structure insights
-(split/merge proposals) come next ([roadmap](docs/explanation/roadmap.md)).
+v1 complete: intake, Review, Threads (tree, edit, reparent, merge, links,
+undo), Today (focus ranking, overdue / blocked / quiet), Person and Label
+pages for meeting prep, and `insights_scan`, which proposes split / merge /
+reparent / done / stale changes you apply or dismiss on the thread. What
+comes next is in the [roadmap](docs/explanation/roadmap.md).
 
 ## Development
 

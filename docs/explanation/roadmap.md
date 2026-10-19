@@ -6,8 +6,8 @@ serves in [requirements.md](requirements.md).
 
 v1 itself is delivered in phases: (1) scaffold, (2) core services, API and
 CLI, (3) notes reader, intake job and Review page, (4) Today, Person and
-Label pages, (5) `insights_scan` with split/merge proposals. Everything
-below starts after phase 5.
+Label pages, (5) `insights_scan` with split/merge proposals. All five are
+done; everything below is the backlog.
 
 ## 1. Reports and notifications
 

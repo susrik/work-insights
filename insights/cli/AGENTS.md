@@ -4,7 +4,7 @@
 `--config` (shared `config_option` callback) and reads `api_base_url`
 from it. Output is JSON (`_echo`) so it can be piped into `jq`.
 
-- One group per noun: `person`, `label`, `thread`, `mention`, `changes`,
+- One group per noun: `person`, `label`, `thread`, `mention`, `insight`, `changes`,
   `jobs`, plus `status` and `db upgrade`.
 - `_call` turns HTTP errors into `click.ClickException` with the server's
   `detail`.

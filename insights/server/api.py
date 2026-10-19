@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from insights import __version__
 from insights.config import Config
-from insights.core import changes, labels, mentions, people, threads
+from insights.core import changes, insights_scan, labels, mentions, people, threads
 from insights.core.llm import LLMClient
 from insights.db.models import OPEN_STATUSES, Actor, JobRun, Thread, ThreadKind
 from insights.db.session import SessionFactory
@@ -354,6 +354,40 @@ def new_thread_from_mentions(body: s.NewThreadFromMentions, session: SessionDep)
         raise _bad(e) from e
     session.commit()
     return s.ThreadOut.of(thread)
+
+
+# --- insights ---
+
+
+@router.get("/insights", response_model=list[s.InsightOut])
+def list_insights(
+    session: SessionDep, thread_id: int | None = None, status: str = "new", limit: int = 200
+) -> list[s.InsightOut]:
+    try:
+        rows = insights_scan.list_insights(session, thread_id, status, limit)
+    except ValueError as e:
+        raise _bad(e) from e
+    return [s.InsightOut.of(i) for i in rows]
+
+
+@router.post("/insights/{insight_id}/apply", response_model=s.InsightOut)
+def apply_insight(insight_id: int, session: SessionDep) -> s.InsightOut:
+    try:
+        insight = insights_scan.apply(session, insight_id)
+    except ValueError as e:
+        raise _not_found(e) from e
+    session.commit()
+    return s.InsightOut.of(insight)
+
+
+@router.post("/insights/{insight_id}/dismiss", response_model=s.InsightOut)
+def dismiss_insight(insight_id: int, session: SessionDep) -> s.InsightOut:
+    try:
+        insight = insights_scan.dismiss(session, insight_id)
+    except ValueError as e:
+        raise _not_found(e) from e
+    session.commit()
+    return s.InsightOut.of(insight)
 
 
 # --- changes / undo ---

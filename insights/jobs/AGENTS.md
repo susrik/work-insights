@@ -2,7 +2,7 @@
 
 Background jobs are plain functions `(JobContext) -> str | None`
 registered by name on `registry` (`registry.py`). Importing `builtin.py`
-registers the built-ins (`housekeeping`, `intake`); `server/app.py` does that.
+registers the built-ins (`housekeeping`, `intake`, `insights_scan`); `server/app.py` does that.
 
 - `registry.py`: `JobRegistry.run` (sync) and `run_async` (daemon thread);
   records a `JobRun`, catches exceptions into `status=failed`.

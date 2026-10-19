@@ -103,6 +103,12 @@ def test_cli_roundtrip(runner: CliRunner) -> None:
     assert result.exit_code == 0 and "[step ]" in result.output
     assert _ok(runner, "jobs", "revert", str(run["id"])) == {"reverted": 0}  # type: ignore[index]
 
+    assert _ok(runner, "insight", "list", "--thread", str(rid), "--status", "all") == []
+    result = runner.invoke(cli, ["insight", "apply", "999"])
+    assert result.exit_code != 0 and "404" in result.output
+    result = runner.invoke(cli, ["insight", "dismiss", "999"])
+    assert result.exit_code != 0
+
     changes = _ok(runner, "changes", "list", "--run-id", "0")
     assert changes == []
     changes = _ok(runner, "changes", "list")

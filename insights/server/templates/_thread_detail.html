@@ -12,6 +12,25 @@
   {% endif %}
 </div>
 
+{% for ins in insights %}
+<div role="alert" class="alert alert-soft alert-info mb-2 py-2 flex items-start gap-3">
+  <span class="badge badge-sm badge-accent mt-0.5">{{ ins.kind }}</span>
+  <div class="grow min-w-0">
+    <div class="font-semibold text-sm">{{ ins.title }}</div>
+    {% if ins.reason %}<div class="text-xs opacity-80">{{ ins.reason }}</div>{% endif %}
+    {% if ins.kind == 'split' %}
+    <ul class="text-xs mt-1 list-disc list-inside">
+      {% for c in ins.payload.children %}<li>{{ c.title }} <span class="opacity-60">({{ c.kind }}, {{ c.mention_ids | length }} mentions)</span></li>{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  <div class="flex gap-1">
+    <button class="btn btn-xs btn-primary" hx-post="/gui/insights/{{ ins.id }}/apply?thread_id={{ thread.id }}" hx-target="#thread-detail" hx-swap="innerHTML">Apply</button>
+    <button class="btn btn-xs btn-ghost" hx-post="/gui/insights/{{ ins.id }}/dismiss?thread_id={{ thread.id }}" hx-target="#thread-detail" hx-swap="innerHTML">Dismiss</button>
+  </div>
+</div>
+{% endfor %}
+
 <form hx-post="/gui/threads/{{ thread.id }}" hx-target="#thread-detail" hx-swap="innerHTML" class="flex flex-col gap-2">
   <input class="input w-full text-lg font-semibold" name="title" value="{{ thread.title }}" required>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-2">

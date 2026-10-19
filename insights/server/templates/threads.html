@@ -64,7 +64,7 @@
   <div class="card bg-base-100 shadow-sm lg:col-span-3">
     <div class="card-body p-4" id="thread-detail">
       {% if selected %}
-        {% with thread=selected.thread, ancestors=selected.ancestors, mentions=selected.mentions, changes=selected.changes, candidates=selected.candidates, all_labels=selected.all_labels, all_people=selected.all_people %}
+        {% with thread=selected.thread, ancestors=selected.ancestors, mentions=selected.mentions, changes=selected.changes, insights=selected.insights, candidates=selected.candidates, all_labels=selected.all_labels, all_people=selected.all_people %}
           {% include "_thread_detail.html" %}
         {% endwith %}
       {% else %}
