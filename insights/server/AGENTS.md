@@ -6,9 +6,14 @@
 - `api.py`: JSON `/api`. Every endpoint: call `core`, map `ValueError` to
   400/404, `session.commit()`, return a schema.
 - `schemas.py`: pydantic in/out models. `XOut.of(orm_obj)` builds output.
-- `gui.py`: pages (`*.html`, extend `_layout.html`) and htmx fragments
-  (`_*.html`). A mutation returns the fragment it belongs to; the Review
-  actions all re-render `_review_groups.html`, keeping `?run=` if set.
+- `gui.py`: `render()`, the Review and Jobs pages, SSE log tail.
+- `gui_pages.py`: Today, Threads (tree + `_thread_detail.html` panel),
+  People/Person, Labels/Label. Plain forms that create/delete redirect
+  (303); htmx forms return the fragment they belong to. `_guard` maps
+  `ValueError` to 404 ("not found") or 400.
+- Templates: pages (`*.html`) extend `_layout.html`; fragments are
+  `_*.html`; shared badges/links/lists are macros in `_macros.html`;
+  `_summary.html` is shared by the Person and Label pages.
 - Templates get `config` for free (`render()` adds it) to build note and
   Jira links via `config.notes.note_url` / `config.jira.issue_url`.
 - `templates/`, `static/theme.css`: htmx 2, Tailwind 4 (browser build),

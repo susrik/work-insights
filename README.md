@@ -22,16 +22,16 @@ Full walk-through: [docs/tutorials/getting-started.md](docs/tutorials/getting-st
 ## Documentation
 
 - [Tutorials](docs/tutorials/) — getting started
-- [How-to](docs/how-to/) — run intake, develop
+- [How-to](docs/how-to/) — run intake, prepare a meeting, develop
 - [Reference](docs/reference/) — concepts, configuration
 - [Explanation](docs/explanation/) — architecture, requirements, roadmap
 
 ## Status
 
-Phase 3 of 5: intake reads notes, extracts mentions and places them on
-threads; the Review page is where you confirm, move or undo. Threads,
-Today, Person and Label pages come next
-([roadmap](docs/explanation/roadmap.md)).
+Phase 4 of 5: intake, Review, Threads (tree, edit, reparent, merge,
+links), Today (focus ranking, overdue / blocked / quiet), and Person and
+Label pages for 1:1 and project-meeting prep. AI structure insights
+(split/merge proposals) come next ([roadmap](docs/explanation/roadmap.md)).
 
 ## Development
 

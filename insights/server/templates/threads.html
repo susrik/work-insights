@@ -1,0 +1,76 @@
+{% extends "_layout.html" %}
+{% from "_macros.html" import kind_badge, status_badge, jira_link %}
+{% block title %}Threads{% endblock %}
+{% block content %}
+<div class="flex items-center gap-3 mb-4 flex-wrap">
+  <h1 class="text-2xl font-bold">Threads</h1>
+  <form method="get" action="/threads" class="flex items-center gap-2 flex-wrap">
+    <input class="input input-sm w-48" type="search" name="q" placeholder="Search titles" value="{{ filters.q }}">
+    <select class="select select-sm" name="status" onchange="this.form.submit()">
+      {% for value, text in [('open', 'open'), ('all', 'all'), ('done', 'done'), ('dropped', 'dropped'), ('blocked', 'blocked')] %}
+      <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ text }}</option>
+      {% endfor %}
+    </select>
+    <select class="select select-sm" name="label" onchange="this.form.submit()">
+      <option value="">any label</option>
+      {% for lb in all_labels %}<option value="{{ lb.id }}" {% if filters.label == lb.id %}selected{% endif %}>{{ lb.name }}</option>{% endfor %}
+    </select>
+    <select class="select select-sm" name="owner" onchange="this.form.submit()">
+      <option value="">any owner</option>
+      {% for p in all_people %}<option value="{{ p.id }}" {% if filters.owner == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-sm">Filter</button>
+  </form>
+  <details class="dropdown dropdown-end ml-auto">
+    <summary class="btn btn-sm btn-primary">New thread</summary>
+    <form method="post" action="/gui/threads" class="dropdown-content bg-base-100 rounded-box z-10 w-80 p-3 shadow-md flex flex-col gap-2">
+      <input class="input input-sm w-full" name="title" placeholder="Title" required autofocus>
+      <select class="select select-sm w-full" name="kind">
+        {% for k in kinds %}<option value="{{ k.value }}">{{ k.value }}</option>{% endfor %}
+      </select>
+      <select class="select select-sm w-full" name="parent_id">
+        <option value="">No parent</option>
+        {% for t, depth in parent_options %}<option value="{{ t.id }}">{{ '— ' * depth }}{{ t.title }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-sm btn-primary" type="submit">Create</button>
+    </form>
+  </details>
+</div>
+
+<div class="grid gap-4 lg:grid-cols-5">
+  <div class="card bg-base-100 shadow-sm lg:col-span-2">
+    <div class="card-body p-2">
+      {% if tree %}
+      <ul class="menu w-full p-0" id="thread-tree">
+        {% for t, depth in tree %}
+        <li>
+          <a class="flex items-center gap-2 py-1 {% if selected and selected.thread.id == t.id %}menu-active{% endif %} {% if t.provisional %}provisional{% endif %}"
+             style="padding-left: {{ 0.75 + depth * 1.25 }}rem"
+             hx-get="/gui/threads/{{ t.id }}" hx-target="#thread-detail" hx-swap="innerHTML" hx-push-url="/threads?selected={{ t.id }}">
+            <span class="grow truncate">{{ t.title }}</span>
+            {{ kind_badge(t.kind) }}
+            {% if t.status.value != 'open' %}{{ status_badge(t.status) }}{% endif %}
+            {% if t.owner %}<span class="text-xs opacity-60">{{ t.owner.name }}</span>{% endif %}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="opacity-60 p-2">No threads match.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card bg-base-100 shadow-sm lg:col-span-3">
+    <div class="card-body p-4" id="thread-detail">
+      {% if selected %}
+        {% with thread=selected.thread, ancestors=selected.ancestors, mentions=selected.mentions, changes=selected.changes, candidates=selected.candidates, all_labels=selected.all_labels, all_people=selected.all_people %}
+          {% include "_thread_detail.html" %}
+        {% endwith %}
+      {% else %}
+      <p class="opacity-60">Select a thread.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

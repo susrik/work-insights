@@ -1,40 +1,71 @@
 {% extends "_layout.html" %}
+{% from "_macros.html" import thread_line, thread_list %}
 {% block title %}Today{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">Today</h1>
+<h1 class="text-2xl font-bold mb-4">Today <span class="text-base font-normal opacity-60">{{ today }}</span></h1>
 
 {% for warning in warnings %}
 <div role="alert" class="alert alert-warning mb-3">{{ warning }}</div>
 {% endfor %}
 
-<div class="grid gap-4 md:grid-cols-3">
-  <div class="card bg-base-100 shadow-sm">
-    <div class="card-body">
-      <h2 class="card-title">Mentions</h2>
-      <div class="stats stats-vertical">
-        <div class="stat px-0 py-1"><div class="stat-title">To review</div><div class="stat-value text-accent">{{ mention_counts.provisional }}</div></div>
-        <div class="stat px-0 py-1"><div class="stat-title">Confirmed</div><div class="stat-value text-lg">{{ mention_counts.confirmed }}</div></div>
-        <div class="stat px-0 py-1"><div class="stat-title">Set aside</div><div class="stat-value text-lg">{{ mention_counts.set_aside }}</div></div>
-      </div>
-    </div>
-  </div>
-  <div class="card bg-base-100 shadow-sm md:col-span-2">
-    <div class="card-body">
-      <h2 class="card-title">Recent jobs</h2>
-      {% if last_runs %}
-      <ul class="text-sm">
-        {% for run in last_runs %}
-        <li class="flex gap-2 items-center py-1">
-          <span class="badge badge-sm {% if run.status.value == 'success' %}badge-success{% elif run.status.value == 'failed' %}badge-error{% else %}badge-info{% endif %}">{{ run.status.value }}</span>
-          <span class="font-mono">{{ run.job_name }}</span>
-          <span class="opacity-60">{{ run.started_at.strftime('%Y-%m-%d %H:%M') }}</span>
-          <span class="truncate min-w-0">{{ run.result or '' }}</span>
+<div class="grid gap-4 lg:grid-cols-3">
+  <div class="card bg-base-100 shadow-sm lg:col-span-2">
+    <div class="card-body p-4">
+      <h2 class="card-title">Focus</h2>
+      {% if ranked %}
+      <ol class="divide-y divide-base-200">
+        {% for r in ranked %}
+        <li class="py-2 flex items-start gap-2 {% if r.thread.provisional %}provisional pl-2{% endif %}">
+          <span class="opacity-50 w-5 text-right">{{ loop.index }}</span>
+          <div class="grow min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">{{ thread_line(r.thread, config) }}</div>
+            <div class="text-xs opacity-60">{{ r.reasons | join(' · ') }}</div>
+          </div>
+          <form hx-post="/gui/threads/{{ r.thread.id }}/status" hx-target="closest li" hx-swap="delete">
+            <input type="hidden" name="status" value="done">
+            <button class="btn btn-xs btn-ghost" title="Mark done">done</button>
+          </form>
         </li>
         {% endfor %}
-      </ul>
+      </ol>
       {% else %}
-      <p class="opacity-60">No jobs have run yet. See <a class="link" href="/jobs">Jobs</a>.</p>
+      <p class="opacity-60">No open threads. Run <span class="font-mono">intake</span> or <a class="link" href="/threads">create one</a>.</p>
       {% endif %}
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-4">
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body p-4">
+        <h2 class="card-title text-base">Needs a decision</h2>
+        <h3 class="text-sm font-semibold mt-2">Overdue</h3>
+        {{ thread_list(attention.overdue, config, empty="Nothing overdue.") }}
+        <h3 class="text-sm font-semibold mt-2">Blocked</h3>
+        {{ thread_list(attention.blocked, config, empty="Nothing blocked.") }}
+        <h3 class="text-sm font-semibold mt-2">Quiet for 3 weeks</h3>
+        {{ thread_list(attention.quiet[:8], config, empty="Everything has been mentioned recently.") }}
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body p-4">
+        <h2 class="card-title text-base">Review</h2>
+        <p><a class="link link-primary text-lg" href="/review">{{ mention_counts.provisional }} mentions</a> waiting
+          <span class="text-sm opacity-60">· {{ mention_counts.confirmed }} confirmed, {{ mention_counts.set_aside }} set aside</span></p>
+        {% if last_runs %}
+        <ul class="text-sm mt-2">
+          {% for run in last_runs %}
+          <li class="flex gap-2 items-center py-0.5">
+            <span class="badge badge-xs {% if run.status.value == 'success' %}badge-success{% elif run.status.value == 'failed' %}badge-error{% else %}badge-info{% endif %}"></span>
+            <span class="font-mono">{{ run.job_name }}</span>
+            <span class="opacity-60">{{ run.started_at.strftime('%m-%d %H:%M') }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-sm opacity-60">No jobs have run yet. See <a class="link" href="/jobs">Jobs</a>.</p>
+        {% endif %}
+      </div>
     </div>
   </div>
 </div>

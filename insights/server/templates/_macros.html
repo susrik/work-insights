@@ -1,0 +1,40 @@
+{% macro status_badge(status) -%}
+<span class="badge badge-sm {% if status.value == 'done' %}badge-success{% elif status.value == 'blocked' %}badge-error{% elif status.value == 'in_progress' %}badge-info{% elif status.value == 'dropped' %}badge-ghost{% else %}badge-outline{% endif %}">{{ status.value.replace('_', ' ') }}</span>
+{%- endmacro %}
+
+{% macro kind_badge(kind) -%}
+<span class="badge badge-sm {% if kind.value == 'agreement' %}badge-secondary{% elif kind.value == 'goal' %}badge-primary{% else %}badge-outline{% endif %}">{{ kind.value }}</span>
+{%- endmacro %}
+
+{% macro jira_link(key, config) -%}
+{% set url = config.jira.issue_url(key) %}
+{% if url %}<a class="link link-primary font-mono text-xs" href="{{ url }}" target="_blank">{{ key }}</a>{% else %}<span class="font-mono text-xs">{{ key }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro note_link(path, config) -%}
+{% set url = config.notes.note_url(path) %}
+{% if url %}<a class="link text-xs" href="{{ url }}" target="_blank">{{ path }}</a>{% else %}<span class="text-xs">{{ path }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro thread_line(t, config, show_owner=True) -%}
+<a class="link link-hover" href="/threads?selected={{ t.id }}">{{ t.title }}</a>
+{{ kind_badge(t.kind) }}
+{{ status_badge(t.status) }}
+{% if t.provisional %}<span class="badge badge-sm badge-accent">new</span>{% endif %}
+{% if t.priority.value in ('critical', 'high') %}<span class="badge badge-sm badge-warning">{{ t.priority.value }}</span>{% endif %}
+{% if show_owner and t.owner %}<span class="text-xs opacity-70">{{ t.owner.name }}</span>{% endif %}
+{% if t.due_date %}<span class="text-xs opacity-70">due {{ t.due_date }}</span>{% endif %}
+{% for key in t.jira_keys %}{{ jira_link(key, config) }}{% endfor %}
+{%- endmacro %}
+
+{% macro thread_list(items, config, empty="Nothing here.", show_owner=True) -%}
+{% if items %}
+<ul class="divide-y divide-base-200">
+  {% for t in items %}
+  <li class="py-1 flex items-center gap-2 flex-wrap {% if t.provisional %}provisional pl-2{% endif %}">{{ thread_line(t, config, show_owner) }}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="text-sm opacity-60">{{ empty }}</p>
+{% endif %}
+{%- endmacro %}

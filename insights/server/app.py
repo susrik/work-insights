@@ -19,6 +19,7 @@ from insights.jobs.registry import mark_interrupted_runs, registry
 from insights.jobs.scheduler import build_scheduler
 from insights.server.api import router as api_router
 from insights.server.gui import router as gui_router
+from insights.server.gui_pages import router as gui_pages_router
 
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -48,5 +49,6 @@ def create_app(config: Config | None = None, llm: LLMClient | None = None) -> Fa
     app.state.broadcast_hub = BroadcastHub()
     app.include_router(api_router)
     app.include_router(gui_router)
+    app.include_router(gui_pages_router)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
     return app

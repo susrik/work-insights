@@ -1,0 +1,27 @@
+{% extends "_layout.html" %}
+{% block title %}{{ person.name }}{% endblock %}
+{% block content %}
+<div class="flex items-center gap-3 mb-4 flex-wrap">
+  <a class="link opacity-60" href="/people">People</a><span class="opacity-60">/</span>
+  <h1 class="text-2xl font-bold">{{ person.name }}</h1>
+  {% if person.is_self %}<span class="badge badge-primary">me</span>{% endif %}
+  <span class="text-sm opacity-60">{{ summary.open_count }} open</span>
+  <a class="btn btn-sm ml-auto" href="/threads?owner={{ person.id }}">All threads</a>
+  <details class="dropdown dropdown-end">
+    <summary class="btn btn-sm">Edit</summary>
+    <div class="dropdown-content bg-base-100 rounded-box z-10 w-80 p-3 shadow-md">
+      <form method="post" action="{{ edit_url }}" class="flex flex-col gap-2">
+        <input class="input input-sm w-full" name="name" value="{{ person.name }}" required>
+        <input class="input input-sm w-full" name="notes_dir" value="{{ person.notes_dir or '' }}" placeholder="Notes folder">
+        <input class="input input-sm w-full" name="aliases" value="{{ person.aliases | join(', ') }}" placeholder="Aliases">
+        <label class="label cursor-pointer justify-start gap-2"><input type="checkbox" class="checkbox checkbox-sm" name="is_self" value="true" {% if person.is_self %}checked{% endif %}><span class="label-text">This is me</span></label>
+        <button class="btn btn-sm btn-primary" type="submit">Save</button>
+      </form>
+      <form method="post" action="{{ edit_url }}/delete" class="mt-2 text-right" onsubmit="return confirm('Remove this person? Their threads keep no owner.')">
+        <button class="btn btn-xs btn-ghost text-error">Remove</button>
+      </form>
+    </div>
+  </details>
+</div>
+{% with show_owner=False %}{% include "_summary.html" %}{% endwith %}
+{% endblock %}

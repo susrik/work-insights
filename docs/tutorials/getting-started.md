@@ -75,8 +75,16 @@ insights changes list
 insights changes undo <id>
 ```
 
+## 7. Look around
+
+- **Threads** shows the tree; click a thread to edit it, move it under a
+  parent, merge another into it, or undo a change from its history.
+- **Today** ranks open threads and lists what needs a decision.
+- **People** and **Labels** open the meeting-prep views.
+
 ## Next
 
 - [Run intake over your notes](../how-to/run-intake.md) once an LLM is
   configured.
+- [Prepare a meeting](../how-to/prepare-a-meeting.md).
 - Read [concepts](../reference/concepts.md) for the vocabulary.

@@ -20,7 +20,7 @@ to [roadmap.md](roadmap.md). Column three gives the place to look.
 | 7 | Richer than ewo tasks: things that actually need doing, with hierarchy | Covered | Threads with single-parent tree and kinds `work`, `agreement`, `goal` |
 | 8 | Labels plus something like "topics"; propose alternatives | Covered | Labels only, with path/Jira hints so they apply themselves; see [concepts.md](../reference/concepts.md) |
 | 9 | Know my priorities easily, with fine control | Covered | Priority field, Today ranking; every field editable |
-| 10 | Refactoring and triage must be simple; split a too-generic bucket easily | Covered | Move/merge/reparent in the Threads page; `insights_scan` proposes splits (phase 5) |
+| 10 | Refactoring and triage must be simple; split a too-generic bucket easily | Covered | Threads page: reparent, merge, link, detach mentions, undo; `insights_scan` proposes splits (phase 5) |
 | 11 | AI help is optional and always validated; no big suggestions page but full editing still possible | Covered | Insights shown contextually on the thread with Apply/Dismiss; full edit forms remain |
 | 12 | Every change reversible; triage can be redone | Covered | `changes` table; undo per change, revert per job run |
 | 13 | New name for "nugget"; keep a link back to the note file (file only, no line numbers) | Covered | **Mention** with `path`; `notes.repo_url_template` renders the GitHub link |
@@ -28,8 +28,8 @@ to [roadmap.md](roadmap.md). Column three gives the place to look.
 | 15 | Importing extracted items into intelligent tasks using context, type, topic and Jira keys | Covered | `core/intake.py`: one LLM pass extracts and places; Review page |
 | 16 | Suggest-new and suggest-existing should be one operation | Covered | Intake decides existing thread / new provisional thread / set aside in a single pass |
 | 17 | Completely new schema, new repository, not a fork | Covered | `insights/db/models.py`; this repo |
-| 18 | Quick access to current agreements per team member for 1:1s (done, in progress, forgotten) | Covered | Person page (phase 4) |
-| 19 | Same summary per project for project meetings | Covered | Label page (phase 4) |
+| 18 | Quick access to current agreements per team member for 1:1s (done, in progress, forgotten) | Covered | Person page: agreements / goals / work, overdue, blocked, quiet, recently done |
+| 19 | Same summary per project for project meetings | Covered | Label page, same layout as the Person page |
 | 20 | New words for task and for the project; it is a planner, not a task manager | Covered | Thread, Mention, Label, Insight; project `work-insights` |
 | 21 | Usable immediately; some setup work acceptable, but not days of ramp-up | Covered | Intake + Review page (phase 3, done) |
 | 22 | Lots of AI analysis of structure: split overcomplicated threads, parallel vs parent-child | Covered (partly) | `insights_scan` job with split/merge/reparent kinds (phase 5); more kinds on roadmap |

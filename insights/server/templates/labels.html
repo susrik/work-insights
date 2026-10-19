@@ -1,0 +1,35 @@
+{% extends "_layout.html" %}
+{% block title %}Labels{% endblock %}
+{% block content %}
+<div class="flex items-center gap-3 mb-4">
+  <h1 class="text-2xl font-bold">Labels</h1>
+  <details class="dropdown dropdown-end ml-auto">
+    <summary class="btn btn-sm btn-primary">Add label</summary>
+    <form method="post" action="/gui/labels" class="dropdown-content bg-base-100 rounded-box z-10 w-80 p-3 shadow-md flex flex-col gap-2">
+      <input class="input input-sm w-full" name="name" placeholder="Name" required>
+      <input class="input input-sm w-full" name="description" placeholder="Description">
+      <input class="input input-sm w-full" name="note_path_prefixes" placeholder="Note folders, comma separated">
+      <input class="input input-sm w-full font-mono" name="jira_projects" placeholder="Jira projects, e.g. DBOARD3">
+      <button class="btn btn-sm btn-primary" type="submit">Add</button>
+    </form>
+  </details>
+</div>
+<div class="card bg-base-100 shadow-sm"><div class="card-body p-2">
+<table class="table table-sm">
+  <thead><tr><th>Name</th><th>Description</th><th>Note folders</th><th>Jira projects</th><th>Open threads</th></tr></thead>
+  <tbody>
+    {% for lb in labels %}
+    <tr>
+      <td><a class="link link-hover font-semibold" href="/labels/{{ lb.id }}">{{ lb.name }}</a></td>
+      <td class="text-sm">{{ lb.description or '' }}</td>
+      <td class="font-mono text-xs">{{ lb.note_path_prefixes | join(', ') }}</td>
+      <td class="font-mono text-xs">{{ lb.jira_projects | join(', ') }}</td>
+      <td>{{ lb.threads | selectattr('is_open') | list | length }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="opacity-60">No labels yet. A label with a note folder or Jira project hint applies itself during intake.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div></div>
+{% endblock %}

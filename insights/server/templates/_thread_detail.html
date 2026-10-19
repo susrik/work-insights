@@ -1,0 +1,141 @@
+{% from "_macros.html" import kind_badge, status_badge, jira_link, note_link, thread_line %}
+{% set hx = 'hx-target="#thread-detail" hx-swap="innerHTML"' %}
+<div class="flex items-center gap-2 flex-wrap text-sm opacity-70 mb-1">
+  {% for a in ancestors %}
+  <a class="link link-hover" hx-get="/gui/threads/{{ a.id }}" hx-target="#thread-detail" hx-swap="innerHTML" hx-push-url="/threads?selected={{ a.id }}">{{ a.title }}</a>
+  <span>/</span>
+  {% endfor %}
+  <span class="font-mono">#{{ thread.id }}</span>
+  {% if thread.provisional %}
+  <span class="badge badge-sm badge-accent">new (AI)</span>
+  <button class="btn btn-xs btn-primary" hx-post="/gui/threads/{{ thread.id }}/confirm" hx-target="#thread-detail" hx-swap="innerHTML">Confirm</button>
+  {% endif %}
+</div>
+
+<form hx-post="/gui/threads/{{ thread.id }}" hx-target="#thread-detail" hx-swap="innerHTML" class="flex flex-col gap-2">
+  <input class="input w-full text-lg font-semibold" name="title" value="{{ thread.title }}" required>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+    <label class="form-control"><span class="label-text text-xs">Kind</span>
+      <select class="select select-sm" name="kind">{% for k in kinds %}<option value="{{ k.value }}" {% if thread.kind == k %}selected{% endif %}>{{ k.value }}</option>{% endfor %}</select></label>
+    <label class="form-control"><span class="label-text text-xs">Status</span>
+      <select class="select select-sm" name="status">{% for st in statuses %}<option value="{{ st.value }}" {% if thread.status == st %}selected{% endif %}>{{ st.value.replace('_', ' ') }}</option>{% endfor %}</select></label>
+    <label class="form-control"><span class="label-text text-xs">Priority</span>
+      <select class="select select-sm" name="priority">{% for pr in priorities %}<option value="{{ pr.value }}" {% if thread.priority == pr %}selected{% endif %}>{{ pr.value }}</option>{% endfor %}</select></label>
+    <label class="form-control"><span class="label-text text-xs">Owner</span>
+      <select class="select select-sm" name="owner_id"><option value="">nobody</option>{% for p in all_people %}<option value="{{ p.id }}" {% if thread.owner_id == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></label>
+    <label class="form-control"><span class="label-text text-xs">Due</span>
+      <input class="input input-sm" type="date" name="due_date" value="{{ thread.due_date or '' }}"></label>
+    <label class="form-control md:col-span-2"><span class="label-text text-xs">Labels (comma separated)</span>
+      <input class="input input-sm" name="labels_text" value="{{ thread.labels | map(attribute='name') | join(', ') }}" list="label-names">
+      <datalist id="label-names">{% for lb in all_labels %}<option value="{{ lb.name }}">{% endfor %}</datalist></label>
+    <label class="form-control"><span class="label-text text-xs">Jira keys</span>
+      <input class="input input-sm font-mono" name="jira_text" value="{{ thread.jira_keys | join(', ') }}"></label>
+  </div>
+  <textarea class="textarea textarea-sm w-full" name="description" rows="2" placeholder="Description">{{ thread.description or '' }}</textarea>
+  <div class="flex items-center gap-2 flex-wrap">
+    <button class="btn btn-sm btn-primary" type="submit">Save</button>
+    {% for key in thread.jira_keys %}{{ jira_link(key, config) }}{% endfor %}
+    <span class="text-xs opacity-60 ml-auto">updated {{ thread.updated_at.strftime('%Y-%m-%d %H:%M') }}{% if thread.last_mentioned_at %} · mentioned {{ thread.last_mentioned_at.strftime('%Y-%m-%d') }}{% endif %}</span>
+  </div>
+</form>
+
+<div class="grid md:grid-cols-3 gap-3 mt-4">
+  <details class="collapse collapse-arrow bg-base-200">
+    <summary class="collapse-title text-sm font-semibold py-2 min-h-0">Parent</summary>
+    <form class="collapse-content flex flex-col gap-2" hx-post="/gui/threads/{{ thread.id }}/parent" hx-target="#thread-detail" hx-swap="innerHTML">
+      <select class="select select-sm w-full" name="parent_id">
+        <option value="">No parent</option>
+        {% for c in candidates %}<option value="{{ c.id }}" {% if thread.parent_id == c.id %}selected{% endif %}>{{ c.title }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-sm" type="submit">Move</button>
+    </form>
+  </details>
+  <details class="collapse collapse-arrow bg-base-200">
+    <summary class="collapse-title text-sm font-semibold py-2 min-h-0">Merge another into this</summary>
+    <form class="collapse-content flex flex-col gap-2" hx-post="/gui/threads/{{ thread.id }}/merge" hx-target="#thread-detail" hx-swap="innerHTML"
+          hx-confirm="Merge the chosen thread into this one? Its mentions, children, labels and keys move here and it is deleted.">
+      <select class="select select-sm w-full" name="from_id" required>
+        <option value="" disabled selected>Thread to absorb…</option>
+        {% for c in candidates %}<option value="{{ c.id }}">{{ c.title }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-sm btn-warning" type="submit">Merge</button>
+    </form>
+  </details>
+  <details class="collapse collapse-arrow bg-base-200">
+    <summary class="collapse-title text-sm font-semibold py-2 min-h-0">Related ({{ thread.related | length }})</summary>
+    <div class="collapse-content flex flex-col gap-2">
+      {% for other in thread.related %}
+      <div class="flex items-center gap-2 text-sm">
+        <a class="link link-hover grow truncate" hx-get="/gui/threads/{{ other.id }}" hx-target="#thread-detail" hx-swap="innerHTML">{{ other.title }}</a>
+        <button class="btn btn-xs btn-ghost" hx-post="/gui/threads/{{ thread.id }}/unlink/{{ other.id }}" hx-target="#thread-detail" hx-swap="innerHTML">unlink</button>
+      </div>
+      {% endfor %}
+      <form class="flex gap-2" hx-post="/gui/threads/{{ thread.id }}/link" hx-target="#thread-detail" hx-swap="innerHTML">
+        <select class="select select-sm grow" name="other_id" required>
+          <option value="" disabled selected>Link to…</option>
+          {% for c in candidates %}<option value="{{ c.id }}">{{ c.title }}</option>{% endfor %}
+        </select>
+        <button class="btn btn-sm" type="submit">Link</button>
+      </form>
+    </div>
+  </details>
+</div>
+
+{% if thread.children %}
+<h3 class="text-sm font-semibold mt-4">Children</h3>
+<ul class="divide-y divide-base-200">
+  {% for c in thread.children %}
+  <li class="py-1 flex items-center gap-2 flex-wrap">
+    <a class="link link-hover" hx-get="/gui/threads/{{ c.id }}" hx-target="#thread-detail" hx-swap="innerHTML" hx-push-url="/threads?selected={{ c.id }}">{{ c.title }}</a>
+    {{ kind_badge(c.kind) }} {{ status_badge(c.status) }}
+    {% if c.owner %}<span class="text-xs opacity-70">{{ c.owner.name }}</span>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h3 class="text-sm font-semibold mt-4">Mentions ({{ mentions | length }})</h3>
+{% if mentions %}
+<ul class="divide-y divide-base-200">
+  {% for m in mentions %}
+  <li class="py-1 flex items-start gap-2 {% if m.state.value == 'provisional' %}provisional pl-2{% endif %}">
+    <span class="badge badge-xs badge-outline mt-1">{{ m.kind.value }}</span>
+    <div class="grow min-w-0">
+      <div class="text-sm">{{ m.summary }}</div>
+      <div class="text-xs opacity-70 flex gap-2 flex-wrap">
+        {{ note_link(m.path, config) }}
+        {% if m.note_date %}<span>{{ m.note_date }}</span>{% endif %}
+        {% if m.owner %}<span>{{ m.owner.name }}</span>{% endif %}
+        {% if m.due_date %}<span>due {{ m.due_date }}</span>{% endif %}
+        <span class="italic">{{ m.state.value }}</span>
+      </div>
+    </div>
+    <button class="btn btn-xs btn-ghost" title="Detach from this thread"
+            hx-post="/gui/threads/{{ thread.id }}/mentions/{{ m.id }}/detach" hx-target="#thread-detail" hx-swap="innerHTML">detach</button>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="text-sm opacity-60">No mentions yet.</p>
+{% endif %}
+
+<details class="mt-4">
+  <summary class="text-sm font-semibold cursor-pointer">History ({{ changes | length }})</summary>
+  <ul class="text-xs mt-1">
+    {% for ch in changes %}
+    <li class="flex gap-2 items-center py-0.5 {% if ch.reverted_at %}opacity-40 line-through{% endif %}">
+      <span class="opacity-60">{{ ch.created_at.strftime('%m-%d %H:%M') }}</span>
+      <span class="badge badge-xs {% if ch.actor.value == 'ai' %}badge-accent{% else %}badge-ghost{% endif %}">{{ ch.actor.value }}</span>
+      <span class="font-mono">{{ ch.field }}</span>
+      <span class="truncate">{{ ch.before if ch.before is not none else '∅' }} → {{ ch.after if ch.after is not none else '∅' }}</span>
+      {% if not ch.reverted_at and ch.field != 'created' %}
+      <button class="btn btn-xs btn-ghost ml-auto" hx-post="/gui/changes/{{ ch.id }}/undo?thread_id={{ thread.id }}" hx-target="#thread-detail" hx-swap="innerHTML">undo</button>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+
+<form class="mt-4 text-right" method="post" action="/gui/threads/{{ thread.id }}/delete" onsubmit="return confirm('Delete this thread? Mentions become unplaced, children move up.')">
+  <button class="btn btn-xs btn-ghost text-error">Delete thread</button>
+</form>

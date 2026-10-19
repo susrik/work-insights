@@ -1,0 +1,44 @@
+{% from "_macros.html" import thread_list, note_link %}
+<div class="grid gap-4 lg:grid-cols-3">
+  <div class="card bg-base-100 shadow-sm lg:col-span-2">
+    <div class="card-body p-4">
+      <h2 class="card-title text-base">Agreements ({{ summary.agreements | length }})</h2>
+      {{ thread_list(summary.agreements, config, empty="No open agreements.", show_owner=show_owner) }}
+      <h2 class="card-title text-base mt-3">Goals ({{ summary.goals | length }})</h2>
+      {{ thread_list(summary.goals, config, empty="No open goals.", show_owner=show_owner) }}
+      <h2 class="card-title text-base mt-3">Work ({{ summary.work | length }})</h2>
+      {{ thread_list(summary.work, config, empty="No open work.", show_owner=show_owner) }}
+    </div>
+  </div>
+  <div class="flex flex-col gap-4">
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body p-4">
+        <h2 class="card-title text-base">Watch</h2>
+        <h3 class="text-sm font-semibold mt-1">Overdue</h3>
+        {{ thread_list(summary.overdue, config, empty="Nothing overdue.", show_owner=show_owner) }}
+        <h3 class="text-sm font-semibold mt-2">Blocked</h3>
+        {{ thread_list(summary.blocked, config, empty="Nothing blocked.", show_owner=show_owner) }}
+        <h3 class="text-sm font-semibold mt-2">Not mentioned for 3 weeks</h3>
+        {{ thread_list(summary.quiet, config, empty="Nothing has gone quiet.", show_owner=show_owner) }}
+      </div>
+    </div>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body p-4">
+        <h2 class="card-title text-base">Done in the last 30 days</h2>
+        {{ thread_list(summary.recently_done, config, empty="Nothing finished recently.", show_owner=show_owner) }}
+      </div>
+    </div>
+    {% if summary.to_review %}
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body p-4">
+        <h2 class="card-title text-base"><a class="link" href="/review">To review</a> ({{ summary.to_review | length }})</h2>
+        <ul class="text-sm">
+          {% for m in summary.to_review[:10] %}
+          <li class="py-0.5">{{ m.summary }} <span class="opacity-60">{{ note_link(m.path, config) }}</span></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>

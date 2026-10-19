@@ -1,0 +1,34 @@
+{% extends "_layout.html" %}
+{% block title %}People{% endblock %}
+{% block content %}
+<div class="flex items-center gap-3 mb-4">
+  <h1 class="text-2xl font-bold">People</h1>
+  <details class="dropdown dropdown-end ml-auto">
+    <summary class="btn btn-sm btn-primary">Add person</summary>
+    <form method="post" action="/gui/people" class="dropdown-content bg-base-100 rounded-box z-10 w-80 p-3 shadow-md flex flex-col gap-2">
+      <input class="input input-sm w-full" name="name" placeholder="Name" required>
+      <input class="input input-sm w-full" name="notes_dir" placeholder="Notes folder, e.g. team/people/robert">
+      <input class="input input-sm w-full" name="aliases" placeholder="Aliases, comma separated">
+      <label class="label cursor-pointer justify-start gap-2"><input type="checkbox" class="checkbox checkbox-sm" name="is_self" value="true"><span class="label-text">This is me</span></label>
+      <button class="btn btn-sm btn-primary" type="submit">Add</button>
+    </form>
+  </details>
+</div>
+<div class="card bg-base-100 shadow-sm"><div class="card-body p-2">
+<table class="table table-sm">
+  <thead><tr><th>Name</th><th>Notes folder</th><th>Aliases</th><th>Open threads</th></tr></thead>
+  <tbody>
+    {% for p in people %}
+    <tr>
+      <td><a class="link link-hover font-semibold" href="/people/{{ p.id }}">{{ p.name }}</a>{% if p.is_self %} <span class="badge badge-xs badge-primary">me</span>{% endif %}</td>
+      <td class="font-mono text-xs">{{ p.notes_dir or '' }}</td>
+      <td class="text-xs">{{ p.aliases | join(', ') }}</td>
+      <td>{{ p.threads | selectattr('is_open') | list | length }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="opacity-60">No people yet. Intake adds one per folder under the notes people directory; add yourself with "This is me".</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div></div>
+{% endblock %}

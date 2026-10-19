@@ -1,0 +1,27 @@
+{% extends "_layout.html" %}
+{% block title %}{{ label.name }}{% endblock %}
+{% block content %}
+<div class="flex items-center gap-3 mb-4 flex-wrap">
+  <a class="link opacity-60" href="/labels">Labels</a><span class="opacity-60">/</span>
+  <h1 class="text-2xl font-bold">{{ label.name }}</h1>
+  {% if label.description %}<span class="text-sm opacity-70">{{ label.description }}</span>{% endif %}
+  <span class="text-sm opacity-60">{{ summary.open_count }} open</span>
+  <a class="btn btn-sm ml-auto" href="/threads?label={{ label.id }}">All threads</a>
+  <details class="dropdown dropdown-end">
+    <summary class="btn btn-sm">Edit</summary>
+    <div class="dropdown-content bg-base-100 rounded-box z-10 w-80 p-3 shadow-md">
+      <form method="post" action="{{ edit_url }}" class="flex flex-col gap-2">
+        <input class="input input-sm w-full" name="name" value="{{ label.name }}" required>
+        <input class="input input-sm w-full" name="description" value="{{ label.description or '' }}" placeholder="Description">
+        <input class="input input-sm w-full" name="note_path_prefixes" value="{{ label.note_path_prefixes | join(', ') }}" placeholder="Note folders">
+        <input class="input input-sm w-full font-mono" name="jira_projects" value="{{ label.jira_projects | join(', ') }}" placeholder="Jira projects">
+        <button class="btn btn-sm btn-primary" type="submit">Save</button>
+      </form>
+      <form method="post" action="{{ edit_url }}/delete" class="mt-2 text-right" onsubmit="return confirm('Delete this label? Threads keep everything else.')">
+        <button class="btn btn-xs btn-ghost text-error">Delete</button>
+      </form>
+    </div>
+  </details>
+</div>
+{% with show_owner=True %}{% include "_summary.html" %}{% endwith %}
+{% endblock %}

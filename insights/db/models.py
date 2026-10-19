@@ -176,6 +176,10 @@ class Thread(Base):
     )
 
     @property
+    def priority_rank(self) -> int:
+        return list(ThreadPriority).index(self.priority)
+
+    @property
     def is_open(self) -> bool:
         return self.status in OPEN_STATUSES
 

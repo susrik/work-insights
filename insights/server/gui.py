@@ -42,24 +42,6 @@ def render(request: Request, name: str, **context: Any) -> HTMLResponse:
 # --- pages ---
 
 
-@router.get("/", response_class=HTMLResponse)
-def today_page(request: Request, session: SessionDep, config: ConfigDep) -> HTMLResponse:
-    counts = mentions.counts_by_state(session)
-    warnings: list[str] = []
-    if not config.llm.enabled:
-        warnings.append("No LLM API key configured: intake and insights are unavailable.")
-    if not config.notes.enabled:
-        warnings.append("Notes are disabled: set notes.enabled and notes.root in the config.")
-    return render(
-        request,
-        "today.html",
-        page="today",
-        mention_counts=counts,
-        warnings=warnings,
-        last_runs=list_runs(session, limit=5),
-    )
-
-
 @router.get("/jobs", response_class=HTMLResponse)
 def jobs_page(
     request: Request, session: SessionDep, registry: Annotated[JobRegistry, Depends(get_registry)]

@@ -14,6 +14,10 @@ objects or plain data, and `flush()` but never `commit()`; the caller
   `SYSTEM_PROMPT`; the reply schema is `IntakeResult`.
 - `changes.py`: `record` every mutation; `undo` one, `revert_run` all for
   a job. Coerces JSON-stored values back to enums/dates.
+- `focus.py`: Today ranking (`rank_threads`, deterministic + daily jitter)
+  and `attention` (overdue / blocked / quiet). Never stored.
+- `summaries.py`: `person_summary` / `label_summary` for 1:1 and project
+  meeting prep: open threads by kind, watch lists, recently done, to review.
 - `people.py`, `labels.py`: CRUD, `resolve_person` (folder first, then
   name/alias), `labels_for_hints`.
 - `jira_keys.py`: key regex, normalisation.
