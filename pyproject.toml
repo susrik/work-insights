@@ -1,0 +1,104 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "work-insights"
+version = "0.1.0"
+description = "Work planner for a team lead: turns meeting notes into threads of work, agreements and goals"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "pydantic>=2",
+    "sqlalchemy>=2",
+    "alembic",
+    "click",
+    "httpx",
+    "jinja2",
+    "python-multipart",
+    "apscheduler>=3,<4",
+    "openai",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "respx",
+    "mypy",
+    "ruff",
+]
+# Browser (Playwright) GUI tests; the browsers are installed separately via
+# `playwright install chromium`.
+test-browser = [
+    "playwright",
+]
+
+[project.scripts]
+insights = "insights.cli.main:cli"
+
+[tool.setuptools]
+packages = { find = { include = ["insights*"] } }
+
+[tool.setuptools.package-data]
+insights = ["server/templates/*.html", "server/static/*", "db/alembic/*.mako", "py.typed"]
+
+[tool.alembic]
+# The database URL is NOT here; env.py reads it from the insights config
+# (insights.json / $INSIGHTS_CONFIG_FILENAME).
+script_location = "%(here)s/insights/db/alembic"
+prepend_sys_path = ["."]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=insights --cov-report=term-missing --cov-fail-under=95 -m 'not browser'"
+filterwarnings = [
+    "error",
+    # SQLite connections released by GC at interpreter shutdown, not a leak in our code
+    "ignore:unclosed database:ResourceWarning",
+]
+markers = [
+    "browser: browser (Playwright) GUI tests - run explicitly with `pytest -m browser --no-cov`",
+]
+
+[tool.coverage.run]
+omit = [
+    "insights/db/alembic/*",
+    "insights/server/__main__.py",
+]
+
+[tool.coverage.report]
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["insights"]
+
+[[tool.mypy.overrides]]
+module = [
+    "apscheduler.*",
+]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["insights/db/alembic/versions"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",   # pycodestyle/pyflakes
+    "I",             # isort
+    "UP",            # pyupgrade
+    "B",             # bugbear
+    "SIM",           # simplify
+    "RUF",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]

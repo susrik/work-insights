@@ -1,0 +1,41 @@
+{% extends "_layout.html" %}
+{% block title %}Today{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Today</h1>
+
+{% for warning in warnings %}
+<div role="alert" class="alert alert-warning mb-3">{{ warning }}</div>
+{% endfor %}
+
+<div class="grid gap-4 md:grid-cols-3">
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body">
+      <h2 class="card-title">Mentions</h2>
+      <div class="stats stats-vertical">
+        <div class="stat px-0 py-1"><div class="stat-title">To review</div><div class="stat-value text-accent">{{ mention_counts.provisional }}</div></div>
+        <div class="stat px-0 py-1"><div class="stat-title">Confirmed</div><div class="stat-value text-lg">{{ mention_counts.confirmed }}</div></div>
+        <div class="stat px-0 py-1"><div class="stat-title">Set aside</div><div class="stat-value text-lg">{{ mention_counts.set_aside }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card bg-base-100 shadow-sm md:col-span-2">
+    <div class="card-body">
+      <h2 class="card-title">Recent jobs</h2>
+      {% if last_runs %}
+      <ul class="text-sm">
+        {% for run in last_runs %}
+        <li class="flex gap-2 items-center py-1">
+          <span class="badge badge-sm {% if run.status.value == 'success' %}badge-success{% elif run.status.value == 'failed' %}badge-error{% else %}badge-info{% endif %}">{{ run.status.value }}</span>
+          <span class="font-mono">{{ run.job_name }}</span>
+          <span class="opacity-60">{{ run.started_at.strftime('%Y-%m-%d %H:%M') }}</span>
+          <span class="truncate min-w-0">{{ run.result or '' }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="opacity-60">No jobs have run yet. See <a class="link" href="/jobs">Jobs</a>.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

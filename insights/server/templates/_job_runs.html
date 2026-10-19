@@ -1,0 +1,19 @@
+<table class="table table-sm">
+  <thead><tr><th>#</th><th>Job</th><th>Status</th><th>Started</th><th>Finished</th><th>Tokens</th><th>Result</th><th></th></tr></thead>
+  <tbody>
+    {% for run in runs %}
+    <tr>
+      <td>{{ run.id }}</td>
+      <td class="font-mono">{{ run.job_name }}</td>
+      <td><span class="badge badge-sm {% if run.status.value == 'success' %}badge-success{% elif run.status.value == 'failed' %}badge-error{% else %}badge-info{% endif %}">{{ run.status.value }}</span></td>
+      <td class="whitespace-nowrap">{{ run.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td class="whitespace-nowrap">{{ run.finished_at.strftime('%H:%M:%S') if run.finished_at else '' }}</td>
+      <td>{{ run.tokens_used }}</td>
+      <td class="min-w-0 max-w-md"><span class="break-words">{{ run.result or (run.error.splitlines()[-1] if run.error else '') }}</span></td>
+      <td><button class="btn btn-xs" hx-get="/gui/jobs/runs/{{ run.id }}/log" hx-target="#job-log" hx-swap="innerHTML">Log</button></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="opacity-60">No runs yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

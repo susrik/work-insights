@@ -1,0 +1,5 @@
+<div class="log-{{ entry.kind }} flex gap-2 min-w-0">
+  <span class="opacity-50 shrink-0">{{ entry.created_at[11:19] if entry.created_at else '' }}</span>
+  <span class="break-words min-w-0">{{ entry.message }}</span>
+  {% if entry.kind == 'llm' and entry.meta.tier %}<span class="badge badge-xs badge-outline shrink-0">{{ entry.meta.tier }}</span>{% endif %}
+</div>

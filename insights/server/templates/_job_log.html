@@ -1,0 +1,11 @@
+<div class="flex items-center gap-2 mb-2 text-sm">
+  <span class="font-mono">{{ run.job_name }}</span>
+  <span class="opacity-60">run #{{ run.id }}</span>
+  <span class="badge badge-sm {% if run.status.value == 'success' %}badge-success{% elif run.status.value == 'failed' %}badge-error{% else %}badge-info{% endif %}">{{ run.status.value }}</span>
+</div>
+<div class="job-log bg-base-200 rounded-box p-2 max-h-96 overflow-y-auto"
+     data-job-log-stream="{{ run.id }}" data-after="{{ entries[-1].id if entries else 0 }}">
+  {% for entry in entries %}{% include "_job_log_entry.html" %}{% else %}
+  <p class="opacity-60" data-placeholder>waiting for output...</p>
+  {% endfor %}
+</div>

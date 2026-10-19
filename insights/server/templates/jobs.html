@@ -1,0 +1,40 @@
+{% extends "_layout.html" %}
+{% block title %}Jobs{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Jobs</h1>
+
+<div class="grid gap-4 md:grid-cols-3">
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body">
+      <h2 class="card-title">Run a job</h2>
+      <div class="flex flex-col gap-2">
+        {% for name in jobs %}
+        <div class="flex items-center gap-2">
+          <span class="font-mono grow">{{ name }}</span>
+          <button class="btn btn-sm btn-primary"
+                  hx-post="/gui/jobs/{{ name }}/run" hx-target="#job-log" hx-swap="innerHTML">Run</button>
+          <button class="btn btn-sm btn-ghost" title="Ignore the last run and process everything"
+                  hx-post="/gui/jobs/{{ name }}/run?full=true" hx-target="#job-log" hx-swap="innerHTML">Full</button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card bg-base-100 shadow-sm md:col-span-2">
+    <div class="card-body">
+      <h2 class="card-title">Live log</h2>
+      <div id="job-log">
+        <p class="opacity-60">Run a job, or pick a run below, to see its log.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card bg-base-100 shadow-sm mt-4">
+  <div class="card-body">
+    <h2 class="card-title">Runs</h2>
+    <div id="job-runs">{% include "_job_runs.html" %}</div>
+  </div>
+</div>
+{% endblock %}

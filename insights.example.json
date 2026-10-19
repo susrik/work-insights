@@ -1,0 +1,32 @@
+{
+  "server": { "host": "127.0.0.1", "port": 9900 },
+  "storage": { "data_dir": "./data" },
+  "database": { "url": "sqlite:///./data/insights.db" },
+  "api_base_url": "http://127.0.0.1:9900",
+  "llm": {
+    "base_url": "http://localhost:4000/v1",
+    "api_key": "",
+    "model": "cheap-model-name",
+    "smart_model": "smart-model-name",
+    "request_timeout": 240
+  },
+  "jira": {
+    "base_url": "https://jira.example.org/"
+  },
+  "notes": {
+    "enabled": true,
+    "root": "~/notes/work",
+    "people_dir": "team/people",
+    "exclude": ["team/people/former", "overviews"],
+    "window_days": 90,
+    "max_file_chars": 40000,
+    "repo_url_template": "https://github.com/example/notes/blob/main/{path}"
+  },
+  "jobs": {
+    "schedules": {},
+    "log_retention_days": 30,
+    "log_prompt_preview_chars": 600
+  },
+  "discord": { "enabled": false },
+  "google": { "enabled": false }
+}

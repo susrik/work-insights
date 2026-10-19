@@ -1,0 +1,48 @@
+/*
+ * work-insights colour palette: Paul Tol's colour-blind-safe sets
+ * (https://personal.sron.nl/~pault/). daisyUI 5 theme tokens accept any CSS
+ * colour, so these are plain hex values.
+ */
+[data-theme="insights"] {
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f7f9f9;
+  --color-base-300: #eef1f1;
+  --color-base-content: #1f2937;
+  --color-primary: #0077bb;        /* Tol vibrant blue   */
+  --color-primary-content: #ffffff;
+  --color-secondary: #009988;      /* Tol vibrant teal   */
+  --color-secondary-content: #ffffff;
+  --color-accent: #aa4499;         /* Tol muted purple   */
+  --color-accent-content: #ffffff;
+  --color-neutral: #1e293b;
+  --color-neutral-content: #ffffff;
+  --color-info: #88ccee;           /* Tol muted light cyan */
+  --color-info-content: #003048;
+  --color-success: #117733;        /* Tol muted green    */
+  --color-success-content: #ffffff;
+  --color-warning: #ee7733;        /* Tol vibrant orange */
+  --color-warning-content: #241303;
+  --color-error: #882255;          /* Tol muted wine     */
+  --color-error-content: #ffffff;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.5rem;
+}
+
+/* Provisional (AI-placed, not yet confirmed) items get a dashed accent edge. */
+.provisional {
+  border-left: 3px dashed var(--color-accent);
+}
+
+/* Priority tints: semantic, very light so text stays readable. */
+.prio-critical { background-color: color-mix(in srgb, var(--color-error) 10%, transparent); }
+.prio-high     { background-color: color-mix(in srgb, var(--color-warning) 12%, transparent); }
+.prio-low      { background-color: color-mix(in srgb, var(--color-info) 18%, transparent); }
+
+/* Job log */
+.job-log { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; }
+.job-log .log-wait { opacity: 0.7; }
+.job-log .log-llm  { color: var(--color-primary); }
+.job-log .log-step { font-weight: 600; }
+.job-log .log-error { color: var(--color-error); }
