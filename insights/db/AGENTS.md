@@ -6,8 +6,9 @@
 - `session.py`: `make_engine` (turns on SQLite foreign keys),
   `make_session_factory` (`expire_on_commit=False`).
 - `alembic/`: migrations. Config is `[tool.alembic]` in `pyproject.toml`;
-  `env.py` reads the DB URL from the insights config. Batch mode is on so
-  ALTERs work on SQLite.
+  `env.py` reads the DB URL from the insights config and creates the
+  SQLite folder. Batch mode is on so ALTERs work on SQLite. `insights db
+  upgrade` locates this package directly, so it works from any cwd.
 
 After editing `models.py`:
 

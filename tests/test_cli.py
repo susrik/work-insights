@@ -129,8 +129,7 @@ def test_cli_error_without_json(config_file: Path, monkeypatch: pytest.MonkeyPat
 def test_db_upgrade(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     import sqlalchemy as sa
 
-    repo = Path(__file__).resolve().parent.parent
-    monkeypatch.chdir(repo)
+    monkeypatch.chdir(tmp_path)  # must work outside the repo root
     url = f"sqlite:///{tmp_path / 'm.db'}"
     cfg = tmp_path / "c.json"
     cfg.write_text(json.dumps({"database": {"url": url}}))

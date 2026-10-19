@@ -141,6 +141,9 @@ def _set(session: Session, obj: Thread | Mention, field: str, value: Any) -> Non
         obj.parent = session.get(Thread, value) if value is not None else None
     elif isinstance(obj, Mention) and field == "thread_id":
         obj.thread = session.get(Thread, value) if value is not None else None
+        if value is None:
+            obj.placed_by = None
+            obj.placement_reason = None
     else:
         setattr(obj, field, value)
     if isinstance(obj, Thread) and field == "status":

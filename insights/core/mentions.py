@@ -190,16 +190,33 @@ def confirm_mentions_on_thread(session: Session, thread_id: int) -> int:
     return count
 
 
-def set_aside(session: Session, mention_id: int, actor: Actor = Actor.USER) -> Mention:
+def set_aside(
+    session: Session,
+    mention_id: int,
+    actor: Actor = Actor.USER,
+    job_run_id: int | None = None,
+    reason: str | None = None,
+) -> Mention:
     """Drop a mention from triage: noise, already done, or not actionable.
     It stays in the database so re-scans never resurface it."""
     mention = get_mention(session, mention_id)
     if mention.thread_id is not None:
         changes.record(
-            session, changes.ENTITY_MENTION, mention.id, "thread_id", mention.thread_id, None, actor
+            session,
+            changes.ENTITY_MENTION,
+            mention.id,
+            "thread_id",
+            mention.thread_id,
+            None,
+            actor,
+            job_run_id,
         )
         mention.thread = None
-    _set_state(session, mention, MentionState.SET_ASIDE, actor, None)
+    _set_state(session, mention, MentionState.SET_ASIDE, actor, job_run_id)
+    if actor == Actor.AI:
+        mention.placed_by = actor
+        mention.placement_reason = reason
+        mention.job_run_id = job_run_id
     session.flush()
     return mention
 
@@ -232,3 +249,39 @@ def counts_by_state(session: Session) -> dict[str, int]:
     for mention in session.scalars(select(Mention.state)):
         counts[mention.value] += 1
     return counts
+
+
+@dataclass
+class ReviewGroup:
+    """Provisional mentions for the Review page, grouped by target thread.
+    ``thread`` is None for unplaced mentions and for the set-aside group."""
+
+    thread: Thread | None
+    mentions: list[Mention]
+    set_aside: bool = False
+
+
+def review_groups(session: Session, job_run_id: int | None = None) -> list[ReviewGroup]:
+    """Provisional mentions grouped by thread, provisional threads first,
+    then by most recent sighting. Set-aside mentions from the same run (or
+    all AI set-asides when no run is given) form a final group."""
+    flt = MentionFilter(state="provisional", job_run_id=job_run_id, limit=2000)
+    by_thread: dict[int | None, list[Mention]] = {}
+    for mention in list_mentions(session, flt):
+        by_thread.setdefault(mention.thread_id, []).append(mention)
+    groups = [
+        ReviewGroup(thread=session.get(Thread, tid) if tid is not None else None, mentions=ms)
+        for tid, ms in by_thread.items()
+    ]
+    groups.sort(
+        key=lambda g: (
+            g.thread is None,
+            not (g.thread.provisional if g.thread else False),
+            -max(m.last_seen_at.timestamp() for m in g.mentions),
+        )
+    )
+    aside_flt = MentionFilter(state="set_aside", job_run_id=job_run_id, limit=200)
+    aside = [m for m in list_mentions(session, aside_flt) if m.placed_by == Actor.AI]
+    if aside:
+        groups.append(ReviewGroup(thread=None, mentions=aside, set_aside=True))
+    return groups

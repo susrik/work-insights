@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any
 
 import click
@@ -78,10 +79,15 @@ def db_upgrade(config_path: str | None) -> None:
     from alembic.config import Config as AlembicConfig
 
     from insights.config import CONFIG_ENV_VAR
+    from insights.db import alembic as alembic_pkg
 
     if config_path:
         os.environ[CONFIG_ENV_VAR] = config_path
-    command.upgrade(AlembicConfig(toml_file="pyproject.toml"), "head")
+    # Point at the installed package so this works from any directory; the
+    # developer `alembic` CLI reads the same location from pyproject.toml.
+    alembic_config = AlembicConfig()
+    alembic_config.set_main_option("script_location", str(Path(alembic_pkg.__file__).parent))
+    command.upgrade(alembic_config, "head")
 
 
 # --- people ---

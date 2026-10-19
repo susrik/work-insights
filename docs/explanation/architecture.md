@@ -14,7 +14,7 @@ insights/
   jobs/          registry, per-run log, live broadcast, scheduler, built-ins
   server/        FastAPI app: /api (JSON) and GUI pages (htmx fragments)
   cli/           click commands; thin client over /api
-  integrations/  notes reader, Jira helpers, reserved Discord/Google
+  integrations/  notes reader (read-only); reserved Discord/Google
 ```
 
 Rules that keep it simple:

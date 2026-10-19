@@ -1,0 +1,102 @@
+{% set q = ('?run=' ~ run_id) if run_id else '' %}
+{% if not groups %}
+<div class="card bg-base-100 shadow-sm"><div class="card-body">
+  <p class="opacity-60">Nothing to review. Run <span class="font-mono">intake</span> from the <a class="link" href="/jobs">Jobs</a> page.</p>
+</div></div>
+{% endif %}
+
+{% for group in groups %}
+<div class="card bg-base-100 shadow-sm mb-4 {% if group.thread and group.thread.provisional %}provisional{% endif %}">
+  <div class="card-body p-4">
+    <div class="flex items-center gap-2 flex-wrap">
+      {% if group.set_aside %}
+        <h2 class="card-title text-base opacity-70">Set aside by intake</h2>
+      {% elif group.thread %}
+        <h2 class="card-title text-base">
+          <span class="badge badge-sm badge-outline">{{ group.thread.kind.value }}</span>
+          {{ group.thread.title }}
+          {% if group.thread.provisional %}<span class="badge badge-sm badge-accent">new</span>{% endif %}
+        </h2>
+        {% if group.thread.owner %}<span class="text-sm opacity-70">{{ group.thread.owner.name }}</span>{% endif %}
+        {% for lb in group.thread.labels %}<span class="badge badge-sm badge-ghost">{{ lb.name }}</span>{% endfor %}
+        {% for key in group.thread.jira_keys %}
+          {% set url = config.jira.issue_url(key) %}
+          {% if url %}<a class="link link-primary text-sm font-mono" href="{{ url }}" target="_blank">{{ key }}</a>{% else %}<span class="text-sm font-mono">{{ key }}</span>{% endif %}
+        {% endfor %}
+        <span class="ml-auto flex gap-1">
+          {% if group.thread.provisional %}
+          <button class="btn btn-xs btn-primary" hx-post="/gui/review/threads/{{ group.thread.id }}/confirm{{ q }}"
+                  hx-target="#review-groups" hx-swap="innerHTML" title="Keep this thread and confirm all its mentions">Confirm thread</button>
+          <button class="btn btn-xs btn-ghost" hx-post="/gui/review/threads/{{ group.thread.id }}/dismiss{{ q }}"
+                  hx-target="#review-groups" hx-swap="innerHTML" hx-confirm="Drop this thread? Its mentions become unplaced."
+                  title="Drop this thread; mentions go back to unplaced">Dismiss thread</button>
+          {% else %}
+          <button class="btn btn-xs btn-primary" hx-post="/gui/review/threads/{{ group.thread.id }}/confirm{{ q }}"
+                  hx-target="#review-groups" hx-swap="innerHTML" title="Confirm all mentions on this thread">Confirm all</button>
+          {% endif %}
+        </span>
+      {% else %}
+        <h2 class="card-title text-base opacity-70">Unplaced</h2>
+      {% endif %}
+    </div>
+
+    <ul class="divide-y divide-base-200 mt-2">
+      {% for m in group.mentions %}
+      <li class="py-2" id="mention-{{ m.id }}">
+        <div class="flex items-start gap-2 flex-wrap">
+          <span class="badge badge-xs badge-outline mt-1">{{ m.kind.value }}</span>
+          <div class="grow min-w-0">
+            <div>{{ m.summary }}</div>
+            {% if m.excerpt %}<div class="text-xs opacity-60 font-mono truncate" title="{{ m.excerpt }}">{{ m.excerpt }}</div>{% endif %}
+            <div class="text-xs opacity-70 flex gap-2 flex-wrap mt-1">
+              {% set url = config.notes.note_url(m.path) %}
+              {% if url %}<a class="link" href="{{ url }}" target="_blank">{{ m.path }}</a>{% else %}<span>{{ m.path }}</span>{% endif %}
+              {% if m.note_date %}<span>{{ m.note_date }}</span>{% endif %}
+              {% if m.owner %}<span>owner: {{ m.owner.name }}</span>{% elif m.owner_name %}<span>owner? {{ m.owner_name }}</span>{% endif %}
+              {% if m.due_date %}<span>due {{ m.due_date }}</span>{% endif %}
+              {% for key in m.jira_keys %}<span class="font-mono">{{ key }}</span>{% endfor %}
+              {% if m.placement_reason %}<span class="italic">{{ m.placement_reason }}</span>{% endif %}
+            </div>
+          </div>
+          <div class="flex gap-1 items-center">
+            {% if group.set_aside %}
+            <button class="btn btn-xs" hx-post="/gui/review/mentions/{{ m.id }}/restore{{ q }}"
+                    hx-target="#review-groups" hx-swap="innerHTML" title="Bring it back for placement">Restore</button>
+            {% else %}
+            {% if group.thread %}
+            <button class="btn btn-xs btn-primary" hx-post="/gui/review/mentions/{{ m.id }}/confirm{{ q }}"
+                    hx-target="#review-groups" hx-swap="innerHTML">Confirm</button>
+            {% endif %}
+            <details class="dropdown dropdown-end">
+              <summary class="btn btn-xs">Move</summary>
+              <div class="dropdown-content bg-base-100 rounded-box z-10 w-80 p-3 shadow-md">
+                <form hx-post="/gui/review/mentions/{{ m.id }}/move{{ q }}" hx-target="#review-groups" hx-swap="innerHTML" class="flex flex-col gap-2">
+                  <select class="select select-sm w-full" name="thread_id" required>
+                    <option value="" disabled selected>Existing thread…</option>
+                    {% for t in open_threads if not group.thread or t.id != group.thread.id %}
+                    <option value="{{ t.id }}">{{ t.title }}{% if t.provisional %} (new){% endif %}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn-sm btn-primary" type="submit">Move</button>
+                </form>
+                <div class="divider my-1 text-xs">or</div>
+                <form hx-post="/gui/review/mentions/{{ m.id }}/new-thread{{ q }}" hx-target="#review-groups" hx-swap="innerHTML" class="flex flex-col gap-2">
+                  <input class="input input-sm w-full" name="title" placeholder="New thread title" value="{{ m.summary }}" required>
+                  <select class="select select-sm w-full" name="kind">
+                    {% for k in kinds %}<option value="{{ k.value }}">{{ k.value }}</option>{% endfor %}
+                  </select>
+                  <button class="btn btn-sm" type="submit">Create and move</button>
+                </form>
+              </div>
+            </details>
+            <button class="btn btn-xs btn-ghost" hx-post="/gui/review/mentions/{{ m.id }}/set-aside{{ q }}"
+                    hx-target="#review-groups" hx-swap="innerHTML" title="Noise, already done, or not actionable">Set aside</button>
+            {% endif %}
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endfor %}

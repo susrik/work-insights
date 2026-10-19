@@ -7,7 +7,10 @@
   400/404, `session.commit()`, return a schema.
 - `schemas.py`: pydantic in/out models. `XOut.of(orm_obj)` builds output.
 - `gui.py`: pages (`*.html`, extend `_layout.html`) and htmx fragments
-  (`_*.html`). A mutation returns the fragment it belongs to.
+  (`_*.html`). A mutation returns the fragment it belongs to; the Review
+  actions all re-render `_review_groups.html`, keeping `?run=` if set.
+- Templates get `config` for free (`render()` adds it) to build note and
+  Jira links via `config.notes.note_url` / `config.jira.issue_url`.
 - `templates/`, `static/theme.css`: htmx 2, Tailwind 4 (browser build),
   daisyUI 5 from CDN. Theme tokens are plain hex in `theme.css`
   (Paul Tol colour-blind-safe palette).

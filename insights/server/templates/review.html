@@ -1,0 +1,34 @@
+{% extends "_layout.html" %}
+{% block title %}Review{% endblock %}
+{% block content %}
+<div class="flex items-center gap-4 mb-4 flex-wrap">
+  <h1 class="text-2xl font-bold">Review</h1>
+  <span class="badge badge-accent badge-lg">{{ counts.provisional }} to review</span>
+  <span class="badge badge-ghost">{{ counts.confirmed }} confirmed</span>
+  <span class="badge badge-ghost">{{ counts.set_aside }} set aside</span>
+  <form class="ml-auto flex items-center gap-2" method="get" action="/review">
+    <label class="text-sm opacity-70" for="run">Intake run</label>
+    <select class="select select-sm" name="run" id="run" onchange="this.form.submit()">
+      <option value="">all</option>
+      {% for r in intake_runs %}
+      <option value="{{ r.id }}" {% if run_id == r.id %}selected{% endif %}>
+        #{{ r.id }} {{ r.started_at.strftime('%Y-%m-%d %H:%M') }} {{ r.status.value }}
+      </option>
+      {% endfor %}
+    </select>
+    {% if run_id %}
+    <button type="button" class="btn btn-sm btn-outline btn-error"
+            hx-post="/gui/review/runs/{{ run_id }}/revert" hx-target="#review-groups" hx-swap="innerHTML"
+            hx-confirm="Undo everything intake run #{{ run_id }} did?">Revert run</button>
+    {% endif %}
+  </form>
+</div>
+
+<p class="text-sm opacity-70 mb-4">
+  Intake placed these mentions provisionally. <b>Confirm</b> if the placement is right,
+  <b>move</b> it to another thread, or <b>set aside</b> if it is noise or already done.
+  Any decision can be undone from the <a class="link" href="/jobs">change log</a>.
+</p>
+
+<div id="review-groups">{% include "_review_groups.html" %}</div>
+{% endblock %}

@@ -7,7 +7,11 @@ objects or plain data, and `flush()` but never `commit()`; the caller
 - `threads.py`: create/update, tree (`set_parent`, `descendant_ids`,
   `ancestors`), merge, related links, labels, Jira keys.
 - `mentions.py`: `upsert_mention` (fingerprint dedupe), `place_mention`,
-  confirm / set aside, filters.
+  confirm / set aside, filters, `review_groups` for the Review page.
+- `intake.py`: one LLM pass per note (`extract_and_place`), then
+  `apply_result` creates provisional mentions/threads. Jira-key and label
+  hints are applied deterministically around the model. Prompt text is
+  `SYSTEM_PROMPT`; the reply schema is `IntakeResult`.
 - `changes.py`: `record` every mutation; `undo` one, `revert_run` all for
   a job. Coerces JSON-stored values back to enums/dates.
 - `people.py`, `labels.py`: CRUD, `resolve_person` (folder first, then

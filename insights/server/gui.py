@@ -9,13 +9,13 @@ from datetime import date
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from insights.config import Config
-from insights.core import mentions
+from insights.core import changes, mentions, threads
 from insights.core.llm import LLMClient
 from insights.db.models import JobRun, JobRunStatus, ThreadKind, ThreadPriority, ThreadStatus
 from insights.db.session import SessionFactory
@@ -31,6 +31,7 @@ ConfigDep = Annotated[Config, Depends(get_config)]
 
 
 def render(request: Request, name: str, **context: Any) -> HTMLResponse:
+    context.setdefault("config", request.app.state.config)
     context.setdefault("statuses", list(ThreadStatus))
     context.setdefault("priorities", list(ThreadPriority))
     context.setdefault("kinds", list(ThreadKind))
@@ -64,6 +65,118 @@ def jobs_page(
     request: Request, session: SessionDep, registry: Annotated[JobRegistry, Depends(get_registry)]
 ) -> HTMLResponse:
     return render(request, "jobs.html", page="jobs", jobs=registry.names(), runs=list_runs(session))
+
+
+@router.get("/review", response_class=HTMLResponse)
+def review_page(request: Request, session: SessionDep, run: int | None = None) -> HTMLResponse:
+    return render(
+        request,
+        "review.html",
+        page="review",
+        counts=mentions.counts_by_state(session),
+        intake_runs=list_runs(session, job_name="intake", limit=10),
+        **_review_context(session, run),
+    )
+
+
+def _review_context(session: Session, run_id: int | None) -> dict[str, Any]:
+    return {
+        "groups": mentions.review_groups(session, run_id),
+        "open_threads": threads.list_threads(session, threads.ThreadFilter(status="open")),
+        "run_id": run_id,
+    }
+
+
+# --- review fragments ---
+
+
+def _review_fragment(request: Request, session: Session, run_id: int | None) -> HTMLResponse:
+    session.commit()
+    return render(request, "_review_groups.html", **_review_context(session, run_id))
+
+
+@router.post("/gui/review/mentions/{mention_id}/confirm", response_class=HTMLResponse)
+def review_confirm(
+    mention_id: int, request: Request, session: SessionDep, run: int | None = None
+) -> HTMLResponse:
+    _guard(lambda: mentions.confirm_mention(session, mention_id))
+    return _review_fragment(request, session, run)
+
+
+@router.post("/gui/review/mentions/{mention_id}/set-aside", response_class=HTMLResponse)
+def review_set_aside(
+    mention_id: int, request: Request, session: SessionDep, run: int | None = None
+) -> HTMLResponse:
+    _guard(lambda: mentions.set_aside(session, mention_id))
+    return _review_fragment(request, session, run)
+
+
+@router.post("/gui/review/mentions/{mention_id}/move", response_class=HTMLResponse)
+def review_move(
+    mention_id: int,
+    request: Request,
+    session: SessionDep,
+    thread_id: Annotated[int, Form()],
+    run: int | None = None,
+) -> HTMLResponse:
+    _guard(lambda: mentions.place_mention(session, mention_id, thread_id))
+    return _review_fragment(request, session, run)
+
+
+@router.post("/gui/review/mentions/{mention_id}/new-thread", response_class=HTMLResponse)
+def review_new_thread(
+    mention_id: int,
+    request: Request,
+    session: SessionDep,
+    title: Annotated[str, Form()],
+    kind: Annotated[ThreadKind, Form()] = ThreadKind.WORK,
+    run: int | None = None,
+) -> HTMLResponse:
+    def go() -> None:
+        thread = threads.create_thread(session, title, kind=kind)
+        mentions.place_mention(session, mention_id, thread.id)
+
+    _guard(go)
+    return _review_fragment(request, session, run)
+
+
+@router.post("/gui/review/mentions/{mention_id}/restore", response_class=HTMLResponse)
+def review_restore(
+    mention_id: int, request: Request, session: SessionDep, run: int | None = None
+) -> HTMLResponse:
+    """Bring a set-aside mention back as unplaced so it can be put somewhere."""
+    _guard(lambda: mentions.place_mention(session, mention_id, None, confirmed=False))
+    return _review_fragment(request, session, run)
+
+
+@router.post("/gui/review/threads/{thread_id}/confirm", response_class=HTMLResponse)
+def review_confirm_thread(
+    thread_id: int, request: Request, session: SessionDep, run: int | None = None
+) -> HTMLResponse:
+    _guard(lambda: threads.confirm_thread(session, thread_id))
+    return _review_fragment(request, session, run)
+
+
+@router.post("/gui/review/threads/{thread_id}/dismiss", response_class=HTMLResponse)
+def review_dismiss_thread(
+    thread_id: int, request: Request, session: SessionDep, run: int | None = None
+) -> HTMLResponse:
+    """Drop a provisional thread; its mentions become unplaced."""
+    _guard(lambda: threads.delete_thread(session, thread_id))
+    return _review_fragment(request, session, run)
+
+
+@router.post("/gui/review/runs/{run_id}/revert", response_class=HTMLResponse)
+def review_revert_run(run_id: int, request: Request, session: SessionDep) -> HTMLResponse:
+    changes.revert_run(session, run_id)
+    return _review_fragment(request, session, None)
+
+
+def _guard(action: Any) -> None:
+    try:
+        action()
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 # --- job fragments ---

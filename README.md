@@ -28,8 +28,9 @@ Full walk-through: [docs/tutorials/getting-started.md](docs/tutorials/getting-st
 
 ## Status
 
-Phase 1 of 5: core model, API, CLI, jobs framework and GUI shell are in
-place. Intake over notes and the Review page come next
+Phase 3 of 5: intake reads notes, extracts mentions and places them on
+threads; the Review page is where you confirm, move or undo. Threads,
+Today, Person and Label pages come next
 ([roadmap](docs/explanation/roadmap.md)).
 
 ## Development

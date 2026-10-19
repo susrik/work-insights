@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from insights.config import Config
 from insights.db.models import Base, Mention
-from insights.db.session import make_engine, make_session_factory
+from insights.db.session import ensure_sqlite_dir, make_engine, make_session_factory
 
 
 def test_sqlite_engine_enforces_foreign_keys(tmp_path: Path) -> None:
@@ -23,3 +23,14 @@ def test_sqlite_engine_enforces_foreign_keys(tmp_path: Path) -> None:
         with pytest.raises(IntegrityError):
             session.flush()
     engine.dispose()
+
+
+def test_make_engine_creates_sqlite_folder(tmp_path: Path) -> None:
+    target = tmp_path / "nested" / "dir" / "x.db"
+    config = Config.model_validate({"database": {"url": f"sqlite:///{target}"}})
+    engine = make_engine(config)
+    with engine.connect():
+        pass
+    assert target.parent.is_dir()
+    engine.dispose()
+    ensure_sqlite_dir("sqlite://")  # in-memory: nothing to create

@@ -33,6 +33,7 @@ the vocabulary; do not reintroduce "task" or "nugget".
 | `insights/jobs/` | Job registry, logging, scheduler | [AGENTS.md](insights/jobs/AGENTS.md) |
 | `insights/server/` | FastAPI `/api` and GUI | [AGENTS.md](insights/server/AGENTS.md) |
 | `insights/cli/` | click CLI over `/api` | [AGENTS.md](insights/cli/AGENTS.md) |
+| `insights/integrations/` | Notes reader (read-only) | [AGENTS.md](insights/integrations/AGENTS.md) |
 | `tests/` | pytest suite | [AGENTS.md](tests/AGENTS.md) |
 | `docs/` | Diátaxis documentation | [AGENTS.md](docs/AGENTS.md) |
 

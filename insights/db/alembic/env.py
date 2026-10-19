@@ -13,12 +13,15 @@ from sqlalchemy import engine_from_config, pool
 
 from insights.config import load_config
 from insights.db.models import Base
+from insights.db.session import ensure_sqlite_dir
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)-5.5s [%(name)s] %(message)s")
 logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
 alembic_config = context.config
-alembic_config.set_main_option("sqlalchemy.url", load_config().database.url)
+_db_url = load_config().database.url
+ensure_sqlite_dir(_db_url)
+alembic_config.set_main_option("sqlalchemy.url", _db_url)
 
 target_metadata = Base.metadata
 

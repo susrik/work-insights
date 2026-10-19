@@ -25,13 +25,13 @@ to [roadmap.md](roadmap.md). Column three gives the place to look.
 | 12 | Every change reversible; triage can be redone | Covered | `changes` table; undo per change, revert per job run |
 | 13 | New name for "nugget"; keep a link back to the note file (file only, no line numbers) | Covered | **Mention** with `path`; `notes.repo_url_template` renders the GitHub link |
 | 14 | Notes can change after import | Roadmap | Fingerprint dedupe handles re-scans; change tracking is roadmap item 9 |
-| 15 | Importing extracted items into intelligent tasks using context, type, topic and Jira keys | Covered | Intake job: one LLM pass extracts and places (phase 3) |
+| 15 | Importing extracted items into intelligent tasks using context, type, topic and Jira keys | Covered | `core/intake.py`: one LLM pass extracts and places; Review page |
 | 16 | Suggest-new and suggest-existing should be one operation | Covered | Intake decides existing thread / new provisional thread / set aside in a single pass |
 | 17 | Completely new schema, new repository, not a fork | Covered | `insights/db/models.py`; this repo |
 | 18 | Quick access to current agreements per team member for 1:1s (done, in progress, forgotten) | Covered | Person page (phase 4) |
 | 19 | Same summary per project for project meetings | Covered | Label page (phase 4) |
 | 20 | New words for task and for the project; it is a planner, not a task manager | Covered | Thread, Mention, Label, Insight; project `work-insights` |
-| 21 | Usable immediately; some setup work acceptable, but not days of ramp-up | Covered | Phase 3 is the first usable milestone: intake + Review page |
+| 21 | Usable immediately; some setup work acceptable, but not days of ramp-up | Covered | Intake + Review page (phase 3, done) |
 | 22 | Lots of AI analysis of structure: split overcomplicated threads, parallel vs parent-child | Covered (partly) | `insights_scan` job with split/merge/reparent kinds (phase 5); more kinds on roadmap |
 | 23 | Parent-child is enough for dependency; plus non-dependent links | Covered | `parent_id` and `thread_links` |
 | 24 | Reports and notifications: slippage, roadblocks, critical items | Roadmap | Item 1 |

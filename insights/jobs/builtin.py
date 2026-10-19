@@ -6,8 +6,9 @@ from datetime import timedelta
 
 from sqlalchemy import delete, func, select
 
+from insights.core.intake import run_intake
 from insights.db.models import JobLogEntry, JobRun, utcnow
-from insights.jobs.registry import JobContext, registry
+from insights.jobs.registry import JobContext, last_successful_run, registry
 
 
 @registry.register("housekeeping")
@@ -29,3 +30,24 @@ def housekeeping(ctx: JobContext) -> str:
         ctx.session.commit()
     ctx.log().info(f"pruned {pruned} log entries from {len(old_runs)} old runs")
     return f"pruned {pruned} log entries"
+
+
+@registry.register("intake")
+def intake(ctx: JobContext) -> str:
+    """Read notes changed since the last successful run, extract mentions and
+    place them on threads. ``full=true`` re-reads the whole window."""
+    log = ctx.log()
+    notes = ctx.config.notes
+    if not notes.enabled:
+        log.error("notes.enabled is false; nothing to do")
+        return "notes disabled"
+    if not ctx.config.llm.api_key:
+        log.error("llm.api_key is not set; intake needs the LLM")
+        return "llm not configured"
+    since = None
+    if not ctx.flag("full"):
+        last = last_successful_run(ctx.session, "intake")
+        since = last.started_at if last else None
+    summary = run_intake(ctx.session, ctx.llm, notes, since, job_run_id=ctx.job_run.id, log=log)
+    ctx.add_tokens(summary.tokens)
+    return summary.as_text()
