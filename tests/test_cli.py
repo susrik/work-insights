@@ -80,6 +80,7 @@ def test_cli_roundtrip(runner: CliRunner) -> None:
     )  # type: ignore[index]
     assert listed[0]["title"] == "Child!"  # type: ignore[index]
     assert _ok(runner, "thread", "list", "--provisional") == []
+    assert _ok(runner, "thread", "list", "--jira", "ab")[0]["id"] == rid  # type: ignore[index]
     _ok(runner, "thread", "confirm", str(rid))
     _ok(runner, "thread", "merge", str(rid), str(cid))
     result = runner.invoke(cli, ["thread", "show", str(rid)])

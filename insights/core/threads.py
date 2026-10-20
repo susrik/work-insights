@@ -37,6 +37,7 @@ class ThreadFilter:
     label_ids: list[int] = field(default_factory=list)
     provisional: bool | None = None
     search: str | None = None
+    jira: str | None = None  # case-insensitive substring of a linked Jira key
     roots_only: bool = False
 
 
@@ -68,6 +69,8 @@ def list_threads(session: Session, flt: ThreadFilter | None = None) -> list[Thre
         stmt = stmt.where(Thread.parent_id.is_(None))
     if flt.search:
         stmt = stmt.where(Thread.title.ilike(f"%{flt.search.strip()}%"))
+    if flt.jira and flt.jira.strip():
+        stmt = stmt.where(Thread.jira_links.any(JiraLink.key.ilike(f"%{flt.jira.strip()}%")))
     threads = list(session.scalars(stmt))
     if flt.label_ids:
         wanted = set(flt.label_ids)

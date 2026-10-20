@@ -59,6 +59,7 @@ def test_thread_lifecycle(client: TestClient) -> None:
     assert client.get("/api/threads", params={"roots_only": "true"}).json()[0]["id"] == root
     assert client.get("/api/threads", params={"kind": "agreement"}).json()[0]["id"] == child
     assert client.get("/api/threads", params={"status": "bogus"}).status_code == 400
+    assert client.get("/api/threads", params={"jira": "ab-"}).json()[0]["id"] == root
     lid = client.get("/api/labels").json()[0]["id"]
     assert len(client.get("/api/threads", params={"label_id": [lid]}).json()) == 2
 

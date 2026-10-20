@@ -133,6 +133,7 @@ def list_threads(
     label_id: Annotated[list[int] | None, Query()] = None,
     provisional: bool | None = None,
     q: str | None = None,
+    jira: str | None = None,
     roots_only: bool = False,
 ) -> list[s.ThreadOut]:
     flt = threads.ThreadFilter(
@@ -142,6 +143,7 @@ def list_threads(
         label_ids=label_id or [],
         provisional=provisional,
         search=q,
+        jira=jira,
         roots_only=roots_only,
     )
     try:

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from datetime import date
 from typing import Annotated, Any
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -61,32 +62,122 @@ def today_page(request: Request, session: SessionDep, config: ConfigDep) -> HTML
 # --- Threads ---
 
 
+STATUS_FILTERS = ["open", "all", *(s.value for s in ThreadStatus if s is not ThreadStatus.OPEN)]
+CONFIRMED_FILTERS = {"all": None, "confirmed": False, "provisional": True}
+THREAD_COLUMNS = [
+    ("kind", "Kind"),
+    ("status", "Status"),
+    ("priority", "Priority"),
+    ("owner", "Owner"),
+    ("labels", "Labels"),
+    ("jira", "Jira"),
+    ("due", "Due"),
+    ("updated", "Updated"),
+    ("confirmed", "Confirmed"),
+]
+
+
+def _opt_int(raw: str, name: str, problems: list[str]) -> int | None:
+    if not raw.strip():
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        problems.append(f"Ignored {name}: {raw!r} is not a number.")
+        return None
+
+
+def _thread_filters(
+    status: str, q: str, label: str, owner: str, confirmed: str, jira: str
+) -> tuple[threads.ThreadFilter, dict[str, Any], list[str]]:
+    """Parse the filter form leniently: form selects submit "" for "any", and a
+    hand-edited URL must never produce an error page, only a warning."""
+    problems: list[str] = []
+    if status not in STATUS_FILTERS:
+        problems.append(f"Ignored status: {status!r} is not one of {', '.join(STATUS_FILTERS)}.")
+        status = "open"
+    if confirmed not in CONFIRMED_FILTERS:
+        problems.append(f"Ignored confirmed: {confirmed!r} is not all, confirmed or provisional.")
+        confirmed = "all"
+    label_id = _opt_int(label, "label", problems)
+    owner_id = _opt_int(owner, "owner", problems)
+    flt = threads.ThreadFilter(
+        status=status,
+        search=q.strip() or None,
+        label_ids=[label_id] if label_id else [],
+        owner_id=owner_id,
+        provisional=CONFIRMED_FILTERS[confirmed],
+        jira=jira.strip() or None,
+    )
+    values = {
+        "status": status,
+        "q": q,
+        "label": label_id,
+        "owner": owner_id,
+        "confirmed": confirmed,
+        "jira": jira,
+    }
+    return flt, values, problems
+
+
+def _list_url(values: dict[str, Any]) -> str:
+    """``/threads?...`` carrying the current filters, for push-url and refresh."""
+    query = urlencode({k: v for k, v in values.items() if v not in ("", None)})
+    return f"/threads?{query}"
+
+
 @router.get("/threads", response_class=HTMLResponse)
 def threads_page(
     request: Request,
     session: SessionDep,
     status: str = "open",
-    q: str | None = None,
-    label: int | None = None,
-    owner: int | None = None,
+    q: str = "",
+    label: str = "",
+    owner: str = "",
+    confirmed: str = "all",
+    jira: str = "",
     selected: int | None = None,
 ) -> HTMLResponse:
-    flt = threads.ThreadFilter(
-        status=status,
-        search=q or None,
-        label_ids=[label] if label else [],
-        owner_id=owner,
-    )
+    flt, values, problems = _thread_filters(status, q, label, owner, confirmed, jira)
     return render(
         request,
         "threads.html",
         page="threads",
         tree=_tree(threads.list_threads(session, flt)),
         parent_options=_tree(threads.list_threads(session, threads.ThreadFilter(status="open"))),
-        filters={"status": status, "q": q or "", "label": label, "owner": owner},
+        filters=values,
+        list_url=_list_url(values),
+        filter_problems=problems,
+        status_filters=STATUS_FILTERS,
+        confirmed_filters=list(CONFIRMED_FILTERS),
+        columns=THREAD_COLUMNS,
         all_labels=labels.list_labels(session),
         all_people=people.list_people(session),
         selected=_thread_context(session, selected) if selected else None,
+    )
+
+
+@router.get("/gui/threads/list", response_class=HTMLResponse)
+def thread_list(
+    request: Request,
+    session: SessionDep,
+    status: str = "open",
+    q: str = "",
+    label: str = "",
+    owner: str = "",
+    confirmed: str = "all",
+    jira: str = "",
+    selected: int | None = None,
+) -> HTMLResponse:
+    """The list pane alone; re-fetched after any thread mutation."""
+    flt, values, _ = _thread_filters(status, q, label, owner, confirmed, jira)
+    return render(
+        request,
+        "_thread_list.html",
+        tree=_tree(threads.list_threads(session, flt)),
+        columns=THREAD_COLUMNS,
+        list_url=_list_url(values),
+        selected_id=selected,
     )
 
 
@@ -129,9 +220,16 @@ def _thread_context(session: Session, thread_id: int) -> dict[str, Any]:
     }
 
 
+THREADS_CHANGED = {"HX-Trigger": "threads-changed"}
+
+
 def _thread_fragment(request: Request, session: Session, thread_id: int) -> HTMLResponse:
+    """Commit a mutation and return the detail panel; the ``HX-Trigger``
+    header makes the list pane refresh itself."""
     session.commit()
-    return render(request, "_thread_detail.html", **_thread_context(session, thread_id))
+    response = render(request, "_thread_detail.html", **_thread_context(session, thread_id))
+    response.headers.update(THREADS_CHANGED)
+    return response
 
 
 @router.get("/gui/threads/{thread_id}", response_class=HTMLResponse)
@@ -255,11 +353,12 @@ def thread_status(
     return _thread_fragment(request, session, thread_id)
 
 
-@router.post("/gui/threads/{thread_id}/delete")
-def thread_delete(thread_id: int, request: Request, session: SessionDep) -> RedirectResponse:
+@router.post("/gui/threads/{thread_id}/delete", response_class=HTMLResponse)
+def thread_delete(thread_id: int, request: Request, session: SessionDep) -> HTMLResponse:
+    """htmx delete: the detail panel empties and the list refreshes."""
     _guard(lambda: threads.delete_thread(session, thread_id))
     session.commit()
-    return RedirectResponse("/threads", status_code=303)
+    return HTMLResponse('<p class="opacity-60">Select a thread.</p>', headers=THREADS_CHANGED)
 
 
 @router.post("/gui/threads/{thread_id}/mentions/{mention_id}/detach", response_class=HTMLResponse)

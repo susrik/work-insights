@@ -1,0 +1,37 @@
+{% from "_macros.html" import kind_badge, status_badge %}
+{# Every column is rendered; threads.html hides and orders them client-side
+   from the user's saved preference (data-col on each cell). #}
+{% if tree %}
+<table class="table table-xs table-pin-rows w-full" id="thread-tree">
+  <thead>
+    <tr>
+      <th data-col="title">Title</th>
+      {% for key, heading in columns %}<th data-col="{{ key }}" class="whitespace-nowrap">{{ heading }}</th>{% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for t, depth in tree %}
+    <tr class="thread-row cursor-pointer hover:bg-base-200 {% if selected_id == t.id %}thread-row-selected{% endif %} {% if t.provisional %}provisional{% endif %}"
+        data-thread-id="{{ t.id }}"
+        hx-get="/gui/threads/{{ t.id }}" hx-target="#thread-detail" hx-swap="innerHTML" hx-push-url="{{ list_url }}&selected={{ t.id }}">
+      <td data-col="title" class="max-w-0 w-full">
+        <div class="truncate" style="padding-left: {{ depth * 1.25 }}rem" title="{{ t.title }}">{{ t.title }}</div>
+      </td>
+      <td data-col="kind">{{ kind_badge(t.kind) }}</td>
+      <td data-col="status">{{ status_badge(t.status) }}</td>
+      <td data-col="priority" class="whitespace-nowrap">{{ t.priority.value }}</td>
+      <td data-col="owner" class="whitespace-nowrap">{{ t.owner.name if t.owner else '' }}</td>
+      <td data-col="labels" class="whitespace-nowrap">{{ t.labels | map(attribute='name') | join(', ') }}</td>
+      <td data-col="jira" class="whitespace-nowrap font-mono">{{ t.jira_keys | join(', ') }}</td>
+      <td data-col="due" class="whitespace-nowrap">{{ t.due_date or '' }}</td>
+      <td data-col="updated" class="whitespace-nowrap">{{ t.updated_at.strftime('%Y-%m-%d') }}</td>
+      <td data-col="confirmed" class="text-center">
+        <input type="checkbox" class="checkbox checkbox-xs pointer-events-none" {% if not t.provisional %}checked{% endif %} tabindex="-1" aria-label="{{ 'confirmed' if not t.provisional else 'provisional' }}">
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="opacity-60 p-2">No threads match.</p>
+{% endif %}
