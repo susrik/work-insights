@@ -58,7 +58,8 @@ def test_threads_page_and_filters(client: TestClient, session_factory: SessionFa
         ids = seed(session)
     text = client.get("/threads").text
     assert "Root work" in text and "Child work" in text and "Select a thread" in text
-    assert "padding-left: 2.0rem" in text  # child is indented
+    assert "padding-left: 1.25rem" in text  # child is indented
+    assert "alert-warning" not in text
 
     def tree_of(url: str) -> str:
         page = client.get(url).text
@@ -68,9 +69,30 @@ def test_threads_page_and_filters(client: TestClient, session_factory: SessionFa
     assert "Other agreement" not in tree_of(f"/threads?label={ids['label']}")
     assert "Child work" in tree_of(f"/threads?label={ids['label']}")  # inherited from parent
     assert "Root work" not in tree_of(f"/threads?owner={ids['robert']}")
+    prov = tree_of("/threads?confirmed=provisional")
+    assert "AI thread" in prov and "Root work" not in prov
+    conf = tree_of("/threads?confirmed=confirmed")
+    assert "AI thread" not in conf and "Root work" in conf
+    jira = tree_of("/threads?jira=dboard3")
+    assert "Root work" in jira and "Child work" not in jira
+
+    # the form submits "" for "any"; that must never be an error
+    r = client.get("/threads", params={"q": "", "status": "open", "label": "", "owner": ""})
+    assert r.status_code == 200 and "alert-warning" not in r.text and "Root work" in r.text
+    # a hand-edited URL is tolerated with a warning
+    r = client.get("/threads?label=abc&owner=x&status=bogus&confirmed=maybe")
+    assert r.status_code == 200 and "Root work" in r.text
+    assert r.text.count("Ignored ") == 4
+
     text = client.get(f"/threads?selected={ids['child']}").text
     assert 'name="title" value="Child work"' in text and "Do x" in text
+    assert f'data-thread-id="{ids["child"]}"' in text and "thread-row-selected" in text
     assert client.get("/threads?selected=999").status_code == 404
+
+    r = client.get(f"/gui/threads/list?q=child&selected={ids['child']}")
+    assert r.status_code == 200 and "Child work" in r.text and "Root work" not in r.text
+    assert "thread-row-selected" in r.text and "selected=" in r.text
+    assert "<html" not in r.text
     assert client.get(f"/gui/threads/{ids['root']}").status_code == 200
     assert client.get("/gui/threads/999").status_code == 404
 
@@ -108,6 +130,7 @@ def test_thread_create_and_update(client: TestClient, session_factory: SessionFa
         },
     )
     assert r.status_code == 200 and 'value="Root renamed"' in r.text
+    assert r.headers["HX-Trigger"] == "threads-changed"
     with session_factory() as session:
         t = threads.get_thread(session, ids["root"])
         assert t.status == ThreadStatus.IN_PROGRESS and t.owner_id == ids["robert"]
@@ -178,10 +201,12 @@ def test_thread_structure_actions(client: TestClient, session_factory: SessionFa
     with session_factory() as session:
         assert threads.get_thread(session, c).status == ThreadStatus.OPEN
 
-    r = client.post(f"/gui/threads/{root}/delete", follow_redirects=False)
-    assert r.status_code == 303
+    r = client.post(f"/gui/threads/{root}/delete")
+    assert r.status_code == 200 and "Select a thread" in r.text
+    assert r.headers["HX-Trigger"] == "threads-changed"
     with session_factory() as session:
         assert session.get(Thread, root) is None
+    assert client.post("/gui/threads/999/delete").status_code == 404
 
 
 def test_people_pages(client: TestClient, session_factory: SessionFactory) -> None:

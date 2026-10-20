@@ -76,7 +76,9 @@ def test_create_update_thread(session: Session) -> None:
 
 def test_list_threads_filters(session: Session) -> None:
     me = people.create_person(session, "Alex", is_self=True)
-    a = threads.create_thread(session, "Alpha work", labels=["l1"], owner_id=me.id)
+    a = threads.create_thread(
+        session, "Alpha work", labels=["l1"], owner_id=me.id, jira_keys=["PROJ-12"]
+    )
     b = threads.create_thread(session, "Beta goal", kind=ThreadKind.GOAL, parent_id=a.id)
     c = threads.create_thread(session, "Gamma done", provisional=True, actor=Actor.AI)
     threads.update_thread(session, c.id, status=ThreadStatus.DONE)
@@ -92,6 +94,9 @@ def test_list_threads_filters(session: Session) -> None:
     assert ids(threads.list_threads(session, ThreadFilter(label_ids=[l1.id]))) == [a.id, b.id]
     assert ids(threads.list_threads(session, ThreadFilter(roots_only=True))) == [a.id]
     assert ids(threads.list_threads(session, ThreadFilter(search="beta"))) == [b.id]
+    assert ids(threads.list_threads(session, ThreadFilter(jira="proj-1"))) == [a.id]
+    assert ids(threads.list_threads(session, ThreadFilter(jira="  "))) == [a.id, b.id]
+    assert ids(threads.list_threads(session, ThreadFilter(jira="nope"))) == []
     assert ids(threads.list_threads(session, ThreadFilter(status="all", provisional=True))) == [
         c.id
     ]

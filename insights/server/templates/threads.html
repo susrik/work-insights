@@ -1,26 +1,46 @@
 {% extends "_layout.html" %}
-{% from "_macros.html" import kind_badge, status_badge, jira_link %}
 {% block title %}Threads{% endblock %}
 {% block content %}
 <div class="flex items-center gap-3 mb-4 flex-wrap">
   <h1 class="text-2xl font-bold">Threads</h1>
-  <form method="get" action="/threads" class="flex items-center gap-2 flex-wrap">
-    <input class="input input-sm w-48" type="search" name="q" placeholder="Search titles" value="{{ filters.q }}">
-    <select class="select select-sm" name="status" onchange="this.form.submit()">
-      {% for value, text in [('open', 'open'), ('all', 'all'), ('done', 'done'), ('dropped', 'dropped'), ('blocked', 'blocked')] %}
-      <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ text }}</option>
+  <form method="get" action="/threads" id="thread-filters" class="flex items-center gap-2 flex-wrap">
+    <input class="input input-sm w-40" type="search" name="q" placeholder="Search titles" value="{{ filters.q }}">
+    <select class="select select-sm w-32" name="status" onchange="this.form.submit()" aria-label="Status">
+      {% for value in status_filters %}
+      <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ value.replace('_', ' ') }}</option>
       {% endfor %}
     </select>
-    <select class="select select-sm" name="label" onchange="this.form.submit()">
+    <select class="select select-sm w-32" name="confirmed" onchange="this.form.submit()" aria-label="Confirmed">
+      {% for value in confirmed_filters %}
+      <option value="{{ value }}" {% if filters.confirmed == value %}selected{% endif %}>{{ value }}</option>
+      {% endfor %}
+    </select>
+    <select class="select select-sm w-40" name="label" onchange="this.form.submit()" aria-label="Label">
       <option value="">any label</option>
       {% for lb in all_labels %}<option value="{{ lb.id }}" {% if filters.label == lb.id %}selected{% endif %}>{{ lb.name }}</option>{% endfor %}
     </select>
-    <select class="select select-sm" name="owner" onchange="this.form.submit()">
+    <select class="select select-sm w-40" name="owner" onchange="this.form.submit()" aria-label="Owner">
       <option value="">any owner</option>
       {% for p in all_people %}<option value="{{ p.id }}" {% if filters.owner == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
     </select>
+    <input class="input input-sm w-28 font-mono" type="search" name="jira" placeholder="Jira key" value="{{ filters.jira }}">
     <button class="btn btn-sm">Filter</button>
+    <a class="btn btn-sm btn-ghost" href="/threads">Reset</a>
   </form>
+  <details class="dropdown" id="column-picker">
+    <summary class="btn btn-sm">Columns</summary>
+    <ul class="dropdown-content menu bg-base-100 rounded-box z-10 w-56 p-2 shadow-md text-sm">
+      {% for key, heading in columns %}
+      <li class="flex-row items-center gap-1" data-col-option="{{ key }}">
+        <label class="grow flex items-center gap-2 py-1 px-2 cursor-pointer">
+          <input type="checkbox" class="checkbox checkbox-xs" data-col-toggle="{{ key }}">{{ heading }}
+        </label>
+        <button type="button" class="btn btn-ghost btn-xs px-1" data-col-move="-1" title="Move up">▲</button>
+        <button type="button" class="btn btn-ghost btn-xs px-1" data-col-move="1" title="Move down">▼</button>
+      </li>
+      {% endfor %}
+    </ul>
+  </details>
   <details class="dropdown dropdown-end ml-auto">
     <summary class="btn btn-sm btn-primary">New thread</summary>
     <form method="post" action="/gui/threads" class="dropdown-content bg-base-100 rounded-box z-10 w-80 p-3 shadow-md flex flex-col gap-2">
@@ -37,31 +57,24 @@
   </details>
 </div>
 
-<div class="grid gap-4 lg:grid-cols-5">
-  <div class="card bg-base-100 shadow-sm lg:col-span-2">
-    <div class="card-body p-2">
-      {% if tree %}
-      <ul class="menu w-full p-0" id="thread-tree">
-        {% for t, depth in tree %}
-        <li>
-          <a class="flex items-center gap-2 py-1 {% if selected and selected.thread.id == t.id %}menu-active{% endif %} {% if t.provisional %}provisional{% endif %}"
-             style="padding-left: {{ 0.75 + depth * 1.25 }}rem"
-             hx-get="/gui/threads/{{ t.id }}" hx-target="#thread-detail" hx-swap="innerHTML" hx-push-url="/threads?selected={{ t.id }}">
-            <span class="grow truncate">{{ t.title }}</span>
-            {{ kind_badge(t.kind) }}
-            {% if t.status.value != 'open' %}{{ status_badge(t.status) }}{% endif %}
-            {% if t.owner %}<span class="text-xs opacity-60">{{ t.owner.name }}</span>{% endif %}
-          </a>
-        </li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <p class="opacity-60 p-2">No threads match.</p>
-      {% endif %}
+{% if filter_problems %}
+<div role="alert" class="alert alert-soft alert-warning mb-4 py-2 text-sm">
+  <ul>{% for p in filter_problems %}<li>{{ p }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<div class="thread-split" id="thread-split">
+  <div class="card bg-base-100 shadow-sm thread-split-list">
+    <div class="card-body p-2 overflow-auto" id="thread-list"
+         hx-get="/gui/threads/list" hx-trigger="threads-changed from:body" hx-include="#thread-filters"
+         hx-vals='js:{selected: selectedThreadId()}' hx-swap="innerHTML">
+      {% with selected_id=selected.thread.id if selected else None %}
+        {% include "_thread_list.html" %}
+      {% endwith %}
     </div>
   </div>
-
-  <div class="card bg-base-100 shadow-sm lg:col-span-3">
+  <div class="thread-split-handle" id="thread-split-handle" role="separator" aria-orientation="vertical" title="Drag to resize"></div>
+  <div class="card bg-base-100 shadow-sm thread-split-detail">
     <div class="card-body p-4" id="thread-detail">
       {% if selected %}
         {% with thread=selected.thread, ancestors=selected.ancestors, mentions=selected.mentions, changes=selected.changes, insights=selected.insights, candidates=selected.candidates, all_labels=selected.all_labels, all_people=selected.all_people %}
@@ -73,4 +86,113 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Column choice/order and the splitter width are per-browser preferences,
+  // kept in localStorage; the server always renders every column.
+  (function () {
+    var ALL = {{ columns | map(attribute=0) | list | tojson }};
+    var DEFAULT = ["kind", "status", "owner"];
+    var COLS_KEY = "threads.columns", WIDTH_KEY = "threads.listWidth";
+
+    function load() {
+      try {
+        var saved = JSON.parse(localStorage.getItem(COLS_KEY));
+        if (Array.isArray(saved)) return saved.filter(function (c) { return ALL.indexOf(c) >= 0; });
+      } catch (_) {}
+      return DEFAULT.slice();
+    }
+    function save(cols) { localStorage.setItem(COLS_KEY, JSON.stringify(cols)); }
+
+    function applyColumns() {
+      var cols = load(), table = document.getElementById("thread-tree");
+      if (table) {
+        table.querySelectorAll("tr").forEach(function (row) {
+          var cells = {};
+          row.querySelectorAll("[data-col]").forEach(function (cell) {
+            cells[cell.dataset.col] = cell;
+            cell.classList.toggle("hidden", cell.dataset.col !== "title" && cols.indexOf(cell.dataset.col) < 0);
+          });
+          cols.forEach(function (c) { if (cells[c]) row.appendChild(cells[c]); });
+        });
+      }
+      var menu = document.querySelector("#column-picker ul");
+      if (menu) {
+        var items = {};
+        menu.querySelectorAll("[data-col-option]").forEach(function (li) {
+          items[li.dataset.colOption] = li;
+          li.querySelector("[data-col-toggle]").checked = cols.indexOf(li.dataset.colOption) >= 0;
+        });
+        cols.forEach(function (c) { if (items[c]) menu.appendChild(items[c]); });
+        ALL.forEach(function (c) { if (cols.indexOf(c) < 0 && items[c]) menu.appendChild(items[c]); });
+      }
+    }
+
+    document.getElementById("column-picker").addEventListener("click", function (e) {
+      var toggle = e.target.closest("[data-col-toggle]"), move = e.target.closest("[data-col-move]");
+      var cols = load();
+      if (toggle) {
+        var key = toggle.dataset.colToggle, i = cols.indexOf(key);
+        if (toggle.checked && i < 0) cols.push(key);
+        if (!toggle.checked && i >= 0) cols.splice(i, 1);
+      } else if (move) {
+        var k = move.closest("[data-col-option]").dataset.colOption, from = cols.indexOf(k);
+        var to = from + parseInt(move.dataset.colMove, 10);
+        if (from < 0 || to < 0 || to >= cols.length) return;
+        cols.splice(from, 1); cols.splice(to, 0, k);
+      } else return;
+      save(cols); applyColumns();
+    });
+
+    // The selected row follows the detail panel, whichever way it was loaded.
+    window.selectedThreadId = function () {
+      var m = /[?&]selected=(\d+)/.exec(location.search);
+      return m ? m[1] : "";
+    };
+    function highlight(id) {
+      document.querySelectorAll("#thread-tree .thread-row").forEach(function (row) {
+        row.classList.toggle("thread-row-selected", row.dataset.threadId === String(id));
+      });
+    }
+    document.body.addEventListener("htmx:beforeRequest", function (e) {
+      var row = e.detail.elt.closest && e.detail.elt.closest(".thread-row");
+      if (row) highlight(row.dataset.threadId);
+    });
+    document.body.addEventListener("htmx:afterSettle", function (e) {
+      if (e.detail.target.id === "thread-list") applyColumns();
+      if (e.detail.target.id === "thread-detail") {
+        var deleted = e.detail.pathInfo.requestPath.endsWith("/delete");
+        if (deleted) {
+          history.replaceState(null, "", location.pathname + location.search.replace(/[?&]selected=\d+/, "").replace(/^&/, "?"));
+          highlight("");
+        } else {
+          highlight(selectedThreadId());
+        }
+      }
+    });
+
+    // Draggable splitter.
+    var split = document.getElementById("thread-split"), handle = document.getElementById("thread-split-handle");
+    var saved = parseInt(localStorage.getItem(WIDTH_KEY), 10);
+    if (saved) split.style.setProperty("--list-width", saved + "px");
+    handle.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      handle.setPointerCapture(e.pointerId);
+      var left = split.getBoundingClientRect().left;
+      function onMove(ev) {
+        var w = Math.max(288, Math.min(ev.clientX - left, split.clientWidth - 320));
+        split.style.setProperty("--list-width", w + "px");
+      }
+      function onUp() {
+        handle.removeEventListener("pointermove", onMove);
+        handle.removeEventListener("pointerup", onUp);
+        localStorage.setItem(WIDTH_KEY, parseInt(split.style.getPropertyValue("--list-width"), 10));
+      }
+      handle.addEventListener("pointermove", onMove);
+      handle.addEventListener("pointerup", onUp);
+    });
+
+    applyColumns();
+  })();
+</script>
 {% endblock %}

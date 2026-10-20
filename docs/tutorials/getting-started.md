@@ -78,7 +78,10 @@ insights changes undo <id>
 ## 7. Look around
 
 - **Threads** shows the tree; click a thread to edit it, move it under a
-  parent, merge another into it, or undo a change from its history.
+  parent, merge another into it, or undo a change from its history. Filter
+  by status, confirmed/provisional, label, owner, title or Jira key; pick
+  and order the list columns with **Columns**; drag the divider to resize
+  the list. The list updates as soon as you save or delete a thread.
 - **Today** ranks open threads and lists what needs a decision.
 - **People** and **Labels** open the meeting-prep views.
 

@@ -4,8 +4,10 @@ Service layer. Functions take a `Session` plus plain arguments, return ORM
 objects or plain data, and `flush()` but never `commit()`; the caller
 (endpoint, job, CLI) commits.
 
-- `threads.py`: create/update, tree (`set_parent`, `descendant_ids`,
-  `ancestors`), merge, related links, labels, Jira keys.
+- `threads.py`: `ThreadFilter`/`list_threads` (status, kind, owner, labels,
+  provisional, title search, Jira-key substring), create/update, tree
+  (`set_parent`, `descendant_ids`, `ancestors`), merge, related links,
+  labels, Jira keys.
 - `mentions.py`: `upsert_mention` (fingerprint dedupe), `place_mention`,
   confirm / set aside, filters, `review_groups` for the Review page.
 - `intake.py`: one LLM pass per note (`extract_and_place`), then

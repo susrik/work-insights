@@ -171,6 +171,7 @@ def thread() -> None:
 @click.option("--owner-id", type=int, default=None)
 @click.option("--provisional", is_flag=True, help="Only AI-created threads awaiting review.")
 @click.option("-q", "search", default=None, help="Title search.")
+@click.option("--jira", default=None, help="Substring of a linked Jira key.")
 @config_option
 def thread_list(
     status: str,
@@ -178,6 +179,7 @@ def thread_list(
     owner_id: int | None,
     provisional: bool,
     search: str | None,
+    jira: str | None,
     config: Config,
 ) -> None:
     params: dict[str, Any] = {"status": status}
@@ -189,6 +191,8 @@ def thread_list(
         params["provisional"] = "true"
     if search:
         params["q"] = search
+    if jira:
+        params["jira"] = jira
     with _client(config) as client:
         _echo(_call(client, "GET", "/api/threads", params=params))
 

@@ -7,10 +7,17 @@
   400/404, `session.commit()`, return a schema.
 - `schemas.py`: pydantic in/out models. `XOut.of(orm_obj)` builds output.
 - `gui.py`: `render()`, the Review and Jobs pages, SSE log tail.
-- `gui_pages.py`: Today, Threads (tree + `_thread_detail.html` panel),
-  People/Person, Labels/Label. Plain forms that create/delete redirect
+- `gui_pages.py`: Today, Threads (`_thread_list.html` + `_thread_detail.html`
+  panes), People/Person, Labels/Label. Plain forms that create redirect
   (303); htmx forms return the fragment they belong to. `_guard` maps
   `ValueError` to 404 ("not found") or 400.
+- Threads page: `_thread_filters` parses the filter form leniently (selects
+  submit `""`; bad values become a warning, never an error). Every thread
+  mutation answers with `HX-Trigger: threads-changed`, which makes
+  `#thread-list` re-fetch `/gui/threads/list` with the current filters.
+  The list renders every column; the column choice/order, the selected-row
+  highlight and the splitter width are handled by the script in
+  `threads.html` and kept in `localStorage`.
 - Templates: pages (`*.html`) extend `_layout.html`; fragments are
   `_*.html`; shared badges/links/lists are macros in `_macros.html`;
   `_summary.html` is shared by the Person and Label pages.

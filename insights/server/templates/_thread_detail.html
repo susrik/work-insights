@@ -155,6 +155,7 @@
   </ul>
 </details>
 
-<form class="mt-4 text-right" method="post" action="/gui/threads/{{ thread.id }}/delete" onsubmit="return confirm('Delete this thread? Mentions become unplaced, children move up.')">
+<form class="mt-4 text-right" hx-post="/gui/threads/{{ thread.id }}/delete" hx-target="#thread-detail" hx-swap="innerHTML"
+      hx-confirm="Delete this thread? Mentions become unplaced, children move up.">
   <button class="btn btn-xs btn-ghost text-error">Delete thread</button>
 </form>
