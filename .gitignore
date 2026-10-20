@@ -15,7 +15,3 @@ dist/
 # runtime config and data: private, never committed
 insights.json
 data/
-
-# private working notes that seeded the design (captured in docs/explanation/requirements.md)
-init-prompt.md
-notes-transcript.txt
